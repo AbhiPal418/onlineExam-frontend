@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api':'http://localhost:3000',
+      '/api':'https://online-exam-backend-delta.vercel.app',
+      // '/api':'http://localhost:3000',
     },
   },
 })
