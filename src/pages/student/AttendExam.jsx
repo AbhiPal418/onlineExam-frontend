@@ -1,60 +1,188 @@
-import { useState } from "react";
-import { useNavigate, useParams ,useLocation} from "react-router-dom";
-import StudentSidebar from "../../components/StudentSidebar";
-import "../../styles/AttendExam.css";
+
+import { useEffect, useState } from "react";
+import {
+    useNavigate,
+    useParams,
+    useLocation,
+    Link
+} from "react-router-dom";
+
 import axios from "axios";
 
+import StudentSidebar from "../../components/StudentSidebar";
+import AfterLogout from "../../components/AfterLogout";
+
+import "../../styles/AttendExam.css";
+
+
 function AttendExam() {
+
     const navigate = useNavigate();
     const location = useLocation();
 
+    const { examId, username } = useParams();
+
+    // Exam data passed from Available Exams page
+    const exam = location.state?.exam;
+
+    // Use URL username as fallback
+    // const student = location.state?.student || username;
+    const [student,setStudent]= useState(undefined);
+    const fetchUsername = async()=>{
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`/api/v1/student/dashboard`)
+            setStudent(response.data.data.username)
+            setIsLoading(false)
+        } catch (error) {
+            console.error("Error fetching user name ",error)
+        }
+    }
+    
+    useEffect(()=>{
+        fetchUsername();
+    },[])
+
+    // Component states
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const { examId } = useParams();
+    const [isLoading, setIsLoading] = useState(false);
 
-    const exam = location.state?.exam;
-    const student = location.state?.student;
+    // If user information is unavailable
+    if (!student && !isLoading) {
+        return <AfterLogout role="student" />;
+    }
 
-   
 
+    // If exam information is unavailable
+    if (!exam) {
+        return (
+            <div className="deactivated-exam">
+                <div className="deactivated-card">
+
+                    <h2>Exam Information Unavailable</h2>
+
+                    <p>
+                        Exam details could not be loaded.
+                        Please return to the available exams page
+                        and select your examination again.
+                    </p>
+
+                    <Link
+                        to={`/student/${student}/available-exams`}
+                        className="deactivated-btn"
+                    >
+                        Back to Available Exams
+                    </Link>
+
+                </div>
+            </div>
+        );
+    }
+
+
+    // Check whether the exam is deactivated
+    if (exam.status === "Deactivated") {
+
+        return (
+            <div className="deactivated-exam">
+
+                <div className="deactivated-card">
+
+                    
+
+                    <h2>Exam Unavailable</h2>
+
+                    <p>
+                        Sorry! This exam is currently inactive.
+                        The teacher has deactivated this examination,
+                        so you cannot attend it right now.
+                    </p>
+
+                    <Link
+                        to={`/student/${student}/dashboard`}
+                        className="deactivated-btn"
+                    >
+                        Back to Dashboard
+                    </Link>
+
+                    <span className="deactivated-footer">
+                        Please contact your teacher for more information.
+                    </span>
+
+                </div>
+
+            </div>
+        );
+    }
+
+
+    // Handle exam password verification
     const handleSubmit = async (e) => {
+
         e.preventDefault();
+
+        if (isLoading) return;
+
         setError("");
 
+        // Validate password
         if (!password.trim()) {
-            setError("Please enter the exam password");
+            setError("Please enter the exam password.");
             return;
         }
 
         try {
+
+            setIsLoading(true);
+
             const response = await axios.post(
                 `/api/v1/student/attend-exam/${examId}`,
-                {password,},{withCredentials: true,}
+                {
+                    password: password.trim()
+                },
+                {
+                    withCredentials: true
+                }
             );
 
+
             if (response.data.success) {
-                navigate(`/student/exam/${examId}`,{
-                    state:{
-                        exam:response.data.data,
-                        student:student
+
+                navigate(`/student/exam/${examId}`, {
+                    state: {
+                        exam: response.data.data,
+                        student: student
                     }
                 });
-                console.log("Hello");
+
             }
 
         } catch (error) {
-            console.error(error.response.data);
+
+            console.error(
+                "Error verifying exam password:",
+                error.response?.data || error.message
+            );
 
             setError(
                 error.response?.data?.message ||
-                "Incorrect exam password"
+                "Unable to verify the exam password. Please try again."
             );
+
+        } finally {
+
+            setIsLoading(false);
+
         }
+
     };
 
 
     return (
+
         <div className="attend-layout">
+
             <StudentSidebar />
 
             <main className="attend-main">
@@ -63,34 +191,48 @@ function AttendExam() {
 
                     <div className="attend-card">
 
-                        <div className="attend-icon">
-                            🔒
-                        </div>
+                        {/* Page Heading */}
 
                         <h1>Enter Exam Password</h1>
 
                         <p className="attend-description">
-                            This examination is password protected. Enter the password
-                            provided by your teacher to continue.
+                            This examination is password protected.
+                            Enter the password provided by your teacher
+                            to continue.
                         </p>
 
+
+                        {/* Exam Information */}
+
                         <div className="exam-preview">
-                            <div className="exam-preview-icon">
-                                📝
-                            </div>
 
                             <div>
+
                                 <h3>{exam.title}</h3>
-                                <p>{exam.questions.length} Questions • {exam.timeLimit} Minutes</p>
+
+                                <p>
+                                    {exam.questions?.length || exam.totalQuestion} Questions
+                                    {" "}•{" "}
+                                    {exam.timeLimit} Minutes
+                                </p>
+
                             </div>
+
                         </div>
+
+
+                        {/* Password Form */}
 
                         <form onSubmit={handleSubmit}>
 
                             <div className="password-group">
-                                <label>Exam Password</label>
+
+                                <label htmlFor="exam-password">
+                                    Exam Password
+                                </label>
 
                                 <input
+                                    id="exam-password"
                                     type="password"
                                     placeholder="Enter exam password"
                                     value={password}
@@ -98,28 +240,50 @@ function AttendExam() {
                                         setPassword(e.target.value);
                                         setError("");
                                     }}
+                                    disabled={isLoading}
+                                    autoComplete="off"
+                                    required
                                 />
 
+
                                 {error && (
+
                                     <p className="password-error">
                                         {error}
                                     </p>
-                                )}
 
+                                )}
 
                             </div>
 
-                            <button type="submit" className="verify-exam-btn">
-                                Verify & Start Exam →
+
+                            <button
+                                type="submit"
+                                className="verify-exam-btn"
+                                disabled={isLoading}
+                            >
+
+                                {isLoading
+                                    ? "Verifying Password..."
+                                    : "Verify & Start Exam →"
+                                }
+
                             </button>
 
                         </form>
 
+
+                        {/* Back Navigation */}
+
                         <button
+                            type="button"
                             className="back-exams-btn"
-                            onClick={() => navigate(`/student/${student}/available-exams`)}
-                        >   
-                            ← Back to Available Exams {student}
+                            onClick={() => navigate(
+                                `/student/${student}/available-exams`
+                            )}
+                            disabled={isLoading}
+                        >
+                            ← Back to Available Exams
                         </button>
 
                     </div>
@@ -127,8 +291,11 @@ function AttendExam() {
                 </div>
 
             </main>
+
         </div>
+
     );
+
 }
 
 export default AttendExam;

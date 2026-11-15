@@ -39,26 +39,19 @@ function Login() {
             );
             setEmail(response.data.data.loggedinUser.email);
             setRollNumber(response.data.data.loggedinUser.rollNumber);
-            let uname = "";
-            for (let i = 0; i < 20; i++) {
-                if (email[i] !== '@') {
-                    uname += email[i];
-                } else {
-                    uname += rollNumber;
-                    break;
-                }
-            }
+          
+            // console.log(response.data.data.loggedinUser.username)
             if (role === "teacher") {
-                navigate(`/teacher/${uname}/dashboard`);
+                navigate(`/teacher/${response.data.data.loggedinUser.username}/dashboard`);
             } else if (role === "student") {
-                navigate(`/student/${uname}/dashboard`);
+                navigate(`/student/${response.data.data.loggedinUser.username}/dashboard`);
             }
         } catch (error) {
             console.error(error);
             setError(error.response.data?.message || "Incorrect Password")
         }
-        // setUsername("");
-        // setPassword("")
+        setUsername("");
+        setPassword("")
     };
 
     return (

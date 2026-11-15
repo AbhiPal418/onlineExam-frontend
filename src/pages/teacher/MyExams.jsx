@@ -1,56 +1,21 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import TeacherSidebar from "../../components/TeacherSidebar";
 import "../../styles/MyExams.css";
 import axios from "axios";
+import AfterLogout from "../../components/AfterLogout";
+
+
 const MyExams = () => {
     const [exams, setExams] = useState([]);
     const [search, setSearch] = useState("");
     const [teacher, setTeacher] = useState({});
+    const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+    const [totalAttemptInExams,setTotalAttemptInExams] = useState(0);
 
-    // Temporary data
-    // Later this will come from your backend API
-
-    const dummyExams = [
-        {
-            _id: "1",
-            title: "Java Programming Fundamentals",
-            description:
-                "Basic concepts of Java programming and OOP.",
-            totalQuestions: 20,
-            timeLimit: 30,
-            totalMarks: 80,
-            createdAt: "2026-09-15",
-            attempts: 24,
-            status: "Active",
-        },
-        {
-            _id: "2",
-            title: "Data Structures",
-            description:
-                "Arrays, linked lists, stacks, queues and trees.",
-            totalQuestions: 25,
-            timeLimit: 45,
-            totalMarks: 100,
-            createdAt: "2026-09-12",
-            attempts: 18,
-            status: "Active",
-        },
-        {
-            _id: "3",
-            title: "Database Management System",
-            description:
-                "SQL, normalization, transactions and database concepts.",
-            totalQuestions: 15,
-            timeLimit: 20,
-            totalMarks: 60,
-            createdAt: "2026-09-08",
-            attempts: 32,
-            status: "Closed",
-        },
-    ];
-    
-    const fetchTeachserData = async () => {
+    const [activeExams,setActiveExams] = useState([]);
+    const fetchTeacherData = async () => {
         try {
             const response = await axios.get("/api/v1/teacher/dashboard");
             setTeacher(response.data.data);
@@ -59,9 +24,13 @@ const MyExams = () => {
         }
     };
 
-    const fetchTeachsersExams= async () => {
+    const fetchTeachersExams = async () => {
         try {
             const response = await axios.get("/api/v1/teacher/created-exams");
+            const response2 = await axios.get("/api/v1/teacher/active-exams");
+            const totalAttemptsIn = await axios.get("/api/v1/teacher/total-attempt-in-exams");
+            setTotalAttemptInExams(totalAttemptsIn.data.data)
+            setActiveExams(response2.data.data)
             setExams(response.data.data);
         } catch (error) {
             console.error("Error fetching teacher data:", error);
@@ -69,35 +38,74 @@ const MyExams = () => {
     };
 
 
-    
+    const changeExamStatus = async (examId) => {
+        try {
+            const response = await axios.post(`/api/v1/teacher/change-status/${examId}`)
+            if (response.data.success) {
+                fetchTeachersExams();
+                setSearch("")
+            }
+        } catch (error) {
+            console.error("Error while changing status ", error);
+        }
+    }
+
+    const searchedExams = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`/api/v1/teacher/search-exams`, {
+                params: {
+                    query: search
+                }
+            })
+            setExams(response.data.data)
+            setIsLoading(false)
+        } catch (error) {
+            console.error("Error searching exams ", error)
+        }
+    }
+
     useEffect(() => {
-        fetchTeachserData();
-        fetchTeachsersExams();
+        setIsLoading(true);
+        fetchTeacherData();
+        if(search === ""){
+
+            fetchTeachersExams();
+        }else{
+            searchedExams();
+        }
+        setIsLoading(false)
     }, []);
 
-    const filteredExams = exams.filter((exam) =>
-        exam.title.toLowerCase().includes(search.toLowerCase())
-    );
+    useEffect(()=>{
+        setIsLoading(true);
+        if(search === ""){
+            fetchTeachersExams();
+        }else{
+            searchedExams();
+        }
+        setIsLoading(false);
+    },[search])
+  
 
-    const handleDelete = (examId) => {
-        const confirmDelete = window.confirm(
-            "Are you sure you want to delete this exam?"
-        );
+    if (isLoading) {
+        return (
+            <div className="loading-data">
+                <p>Loading.....</p>
+            </div>
+        )
+    }
 
-        if (!confirmDelete) return;
+    if (!teacher && !isLoading) {
+        return <AfterLogout role="teacher" />;
+    }
 
-        setExams((prev) =>
-            prev.filter((exam) => exam._id !== examId)
-        );
-    };
-
-    console.log("hello")
     return (
         <div className="teacher-page">
             <TeacherSidebar />
 
             <main className="teacher-main my-exams-main">
-               
+
                 {/* Header */}
                 <div className="my-exams-header">
                     <div>
@@ -108,10 +116,10 @@ const MyExams = () => {
                     </div>
 
                     <Link
-                        to="/teacher/create-exam"
+                        to={`/teacher/${teacher.username}/create-exam`}
                         className="create-exam-btn"
                     >
-                        + Create Exam
+                        Create Exam
                     </Link>
                 </div>
 
@@ -119,11 +127,10 @@ const MyExams = () => {
                 <div className="exam-summary">
 
                     <div className="exam-summary-card">
-                        <div className="summary-icon">📝</div>
 
                         <div>
                             <span className="summary-value">
-                                {exams.length}
+                                {teacher.createdExams?.length}
                             </span>
 
                             <span className="summary-label">
@@ -133,15 +140,10 @@ const MyExams = () => {
                     </div>
 
                     <div className="exam-summary-card">
-                        <div className="summary-icon">🟢</div>
 
                         <div>
                             <span className="summary-value">
-                                {
-                                    exams.filter(
-                                        (exam) => exam.status === "Active"
-                                    ).length
-                                }
+                                {activeExams.length}
                             </span>
 
                             <span className="summary-label">
@@ -151,15 +153,10 @@ const MyExams = () => {
                     </div>
 
                     <div className="exam-summary-card">
-                        <div className="summary-icon">👥</div>
 
                         <div>
                             <span className="summary-value">
-                                {exams.reduce(
-                                    (total, exam) =>
-                                        total + exam.attempts,
-                                    0
-                                )}
+                                {totalAttemptInExams}
                             </span>
 
                             <span className="summary-label">
@@ -174,21 +171,27 @@ const MyExams = () => {
                 <div className="my-exams-toolbar">
 
                     <div className="exam-search">
-                        <span>🔍</span>
-
                         <input
                             type="text"
                             placeholder="Search exams..."
                             value={search}
-                            onChange={(e) =>
-                                setSearch(e.target.value)
-                            }
+                            onChange={(e) => setSearch(e.target.value)}
                         />
+
+                        {search && (
+                            <button
+                                type="button"
+                                onClick={() => setSearch("")}
+                                className="clear-search"
+                            >
+                                ✕
+                            </button>
+                        )}
                     </div>
 
                     <span className="exam-count">
-                        {filteredExams.length} exam
-                        {filteredExams.length !== 1 ? "s" : ""}
+                        {exams.length} exam
+                        {exams.length !== 1 ? "s" : ""}
                     </span>
 
                 </div>
@@ -196,12 +199,8 @@ const MyExams = () => {
                 {/* Exams */}
                 <div className="my-exams-list">
 
-                    {filteredExams.length === 0 ? (
+                    {exams.length === 0 ? (
                         <div className="no-exams">
-
-                            <div className="no-exams-icon">
-                                📋
-                            </div>
 
                             <h2>No Exams Found</h2>
 
@@ -222,35 +221,22 @@ const MyExams = () => {
 
                         </div>
                     ) : (
-                        filteredExams.map((exam) => (
+                        exams.map((exam) => (
 
-                            <div
-                                className="my-exam-card"
-                                key={exam._id}
-                            >
+                            <div className="my-exam-card" key={exam._id} >
 
                                 <div className="exam-card-top">
 
                                     <div className="exam-title-section">
 
-                                        <div className="exam-icon">
-                                            📝
-                                        </div>
-
                                         <div>
                                             <h2>{exam.title}</h2>
 
-                                            {/* <p>
-                                                {exam.description}
-                                            </p> */}
                                         </div>
 
                                     </div>
 
-                                    <span
-                                        className={`exam-status ${exam.status.toLowerCase()
-                                            }`}
-                                    >
+                                    <span className={`exam-status ${exam.status.toLowerCase()}`} >
                                         {exam.status}
                                     </span>
 
@@ -259,9 +245,7 @@ const MyExams = () => {
                                 <div className="exam-details">
 
                                     <div className="exam-detail">
-                                        <span className="detail-icon">
-                                            ❓
-                                        </span>
+
 
                                         <div>
                                             <span className="detail-label">
@@ -275,9 +259,7 @@ const MyExams = () => {
                                     </div>
 
                                     <div className="exam-detail">
-                                        <span className="detail-icon">
-                                            ⏱️
-                                        </span>
+
 
                                         <div>
                                             <span className="detail-label">
@@ -291,9 +273,7 @@ const MyExams = () => {
                                     </div>
 
                                     <div className="exam-detail">
-                                        <span className="detail-icon">
-                                            🎯
-                                        </span>
+
 
                                         <div>
                                             <span className="detail-label">
@@ -301,15 +281,13 @@ const MyExams = () => {
                                             </span>
 
                                             <strong>
-                                                {exam.totalQuestion*4}
+                                                {exam.totalQuestion * 4}
                                             </strong>
                                         </div>
                                     </div>
 
                                     <div className="exam-detail">
-                                        <span className="detail-icon">
-                                            👥
-                                        </span>
+
 
                                         <div>
                                             <span className="detail-label">
@@ -340,27 +318,27 @@ const MyExams = () => {
                                     <div className="exam-actions">
 
                                         <Link
-                                            to={`/teacher/exam/${exam._id}`}
+                                            to={`/teacher/${teacher.username}/view-exam/${exam._id}`}
                                             className="view-exam-btn"
                                         >
                                             View
                                         </Link>
 
                                         <Link
-                                            to={`/teacher/exam/${exam._id}/edit`}
+                                            to={`/teacher/${teacher.username}/edit-exam/${exam._id}`}
                                             className="edit-exam-btn"
                                         >
                                             Edit
                                         </Link>
 
                                         <button
-                                            className="delete-exam-btn"
-                                            onClick={() =>
-                                                handleDelete(exam._id)
-                                            }
+                                            onClick={() => changeExamStatus(exam._id)}
+                                            className="change-exam-btn"
                                         >
-                                            Delete
+                                            Change status
                                         </button>
+
+
 
                                     </div>
 

@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 import StudentSidebar from "../../components/StudentSidebar";
 import axios from "axios";
 function AttemptedExams() {
-
+    const [isSidebarOpen,setIsSidebarOpen] = useState(false)
     const [attemptedExams, setAttemptedExams] = useState([]);
     
     const fetchStudentData = async () => {
         try {
             const response = await axios.get("/api/v1/student/attempted-exams");
             // setUsername(response.data.data.fullName);
-            console.log(response.data.data);
+            // console.log(response.data.data);
             setAttemptedExams(response.data.data);
             // setUser(response.data.data);
         } catch (error) {
@@ -22,20 +22,11 @@ function AttemptedExams() {
         fetchStudentData();
     }, [])
 
-    // let username = "";
-    // for (let i = 0; i < 20; i++) {
-    //     if (email[i] !== '@') {
-    //         username += email[i];
-    //     } else {
-    //         username += rollNumber;
-    //         break;
-    //     }
-    // }
-
-    // console.log(attemptedExams)
+   
+    
     return (
         <div className="attempted-layout">
-            <StudentSidebar />
+          
 
             <main className="attempted-main">
 

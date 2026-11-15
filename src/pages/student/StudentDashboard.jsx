@@ -3,25 +3,39 @@ import "../../styles/StudentDashboard.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import AfterLogout from "../../components/AfterLogout";
+
+
 
 function StudentDashboard() {
     // console.log("hello world")
 
     const navigate = useNavigate();
-    const [username, setUsername] = useState("");
+    // const [username, setUsername] = useState("");
     const [attemptedExams, setAttemptedExams] = useState([]);
-
     const [exams, setExams] = useState([]);
     const [user, setUser] = useState({});
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+
+
     const fetchStudentData = async () => {
         try {
+
             const response = await axios.get("/api/v1/student/dashboard");
             const attempted = await axios.get("/api/v1/student/attempted-exams");
-            setUsername(response.data.data.fullName);
             setAttemptedExams(attempted.data.data);
             setUser(response.data.data);
+            setIsAuthenticated(true);
         } catch (error) {
+            if (error.response?.status === 401) {
+                setIsAuthenticated(false);
+            }
             console.error("Error fetching student data:", error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -36,23 +50,30 @@ function StudentDashboard() {
 
 
     const handleStartExam = (examId, exam) => {
-        navigate(`/student/${user.fullName}/attend-exam/${examId}`, {
+        navigate(`/student/${user?.username}/attend-exam/${examId}`, {
             state: {
                 exam: exam,
-                student: user.fullName
+                student: user.username
             }
         });
     };
 
     useEffect(() => {
 
-        fetchStudentData(),
-            getAllExams()
+        fetchStudentData();
+        getAllExams();
 
     }, []);
 
-    // console.log("hi")
-    if (!exams) return (<div>hello</div>)
+    if (isLoading) {
+        return <div>Loading dashboard...</div>;
+    }
+
+    if (!isAuthenticated && !isLoading) {
+        return <AfterLogout role="student" />;
+    }
+
+
     return (
         <div className="student-layout">
 
@@ -60,7 +81,6 @@ function StudentDashboard() {
 
             <main className="student-main">
 
-                {/* Top Header */}
 
                 <header className="dashboard-header">
 
@@ -68,11 +88,12 @@ function StudentDashboard() {
                         <h1>Welcome, {user.fullName} </h1>
                     </div>
 
-                    <div className="header-profile">
-
-                        <div className="profile-avatar-dashboard">
-                            {user.fullName?.[0]}
-                        </div>
+                    <div className="header-profile" >
+                        <Link to={`/student/${user.username}/profile`}>
+                            <div className="profile-avatar-dashboard">
+                                {user.fullName?.[0]}
+                            </div>
+                        </Link>
                     </div>
 
                 </header>
@@ -92,7 +113,6 @@ function StudentDashboard() {
 
 
                     <div className="stat-card">
-                        {/* <div className="stat-icon green">✓</div> */}
 
                         <div>
                             <p>Attempted</p>
@@ -100,12 +120,11 @@ function StudentDashboard() {
                         </div>
                     </div>
 
-
                     <div className="stat-card">
 
                         <div>
-                            <p>Average Score</p>
-                            <h2>82%</h2>
+                            <p>Created Exams</p>
+                            <h2>{user.createdExams?.length}</h2>
                         </div>
                     </div>
 
@@ -134,10 +153,15 @@ function StudentDashboard() {
 
                         {exams?.map((exam, index) => (
 
-                            <div className="exam-card-dashboard" key={index}>
+                            <div className="exam-card-dashboard" key={exam._id}>
 
-                                <h3>{exam.title}</h3>
+                                <div className="available-exam-top">
 
+                                    <h5>{exam.title}</h5>
+                                    <span className={`exam-status ${exam.status.toLowerCase()}`} >
+                                        {exam.status}
+                                    </span>
+                                </div>
                                 <p className="teacher-name">
                                     Created By <strong>{exam.createdBy.fullName}</strong>
                                 </p>
@@ -191,15 +215,11 @@ function StudentDashboard() {
 
                         {
                             attemptedExams?.map((exam, index) => (
-                                <div id={index} className="performance-item">
+                                <div id={exam._id} className="performance-item" key={exam._id}>
                                     <div>
                                         <h3>{exam.title}</h3>
-                                        <p>{exam.date}</p>
+                                        <p>{new Date(exam.createdAt).toLocaleDateString()}</p>
                                     </div>
-
-                                    {/* <div className="score">
-                                        76%
-                                    </div> */}
                                 </div>
                             ))
                         }

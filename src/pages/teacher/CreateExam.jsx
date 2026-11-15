@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import TeacherSidebar from "../../components/TeacherSidebar";
 import "../../styles/CreateExam.css";
 import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import AfterLogout from "../../components/AfterLogout";
+
 
 function CreateExam() {
     const [teacher, setTeacher] = useState({});
+    const [isNegativeMarkings, setIsNegativeMarkings] = useState(false);
+    const navigate = useNavigate();
+    const [isLoading,setIsLoading] = useState(false);
 
-    // console.log(examData)
-    // console.log(questions)
     const [error, setError] = useState("");
     const fetchTeacherData = async () => {
 
@@ -16,11 +20,13 @@ function CreateExam() {
             const response = axios.get(`/api/v1/teacher/dashboard`);
             setTeacher((await response).data.data);
         } catch (error) {
-            console.log(error)
+            console.error("Error while fetching Data " ,error)
         }
     }
     useEffect(() => {
+        setIsLoading(true);
         fetchTeacherData();
+        setIsLoading(false);
     }, [])
 
     const [examData, setExamData] = useState({
@@ -30,6 +36,8 @@ function CreateExam() {
         createdBy: teacher?._id,
         totalQuestions: 0,
         password: "",
+        questionMarks: 0,
+        negativeMarks: 0,
     });
 
     const [questions, setQuestions] = useState([
@@ -37,7 +45,7 @@ function CreateExam() {
             id: 1,
             question: "",
             options: ["", "", "", ""],
-            correctAnswer: "",
+            correctAnswer:null,
         },
     ]);
 
@@ -59,11 +67,7 @@ function CreateExam() {
         );
     };
 
-    const handleOptionChange = (
-        questionId,
-        optionIndex,
-        value
-    ) => {
+    const handleOptionChange = (questionId, optionIndex, value) => {
         setQuestions((prev) =>
             prev.map((question) =>
                 question.id === questionId
@@ -128,7 +132,10 @@ function CreateExam() {
 
             const response = await axios.post(`/api/v1/teacher/create-exam`, Edata)
             // alert("Exam created successfully");
-            console.log(response.data.data)
+            // console.log(response.data.data)
+
+            navigate(`/teacher/${teacher.username}/dashboard`, {
+            });
         } catch (error) {
             setError(error.response?.data?.message || "noerror");
             // console.log("hello",error)
@@ -137,6 +144,18 @@ function CreateExam() {
 
         // alert("Exam created successfully!");
     };
+
+
+    if(isLoading){
+        return(
+            <div className="loading-data">
+                <p>Loading.......</p>
+            </div>
+        )
+    }
+    if (!teacher && !isLoading) {
+        return <AfterLogout role="teacher" />;
+    }
 
     // console.log(error)
     return (
@@ -154,27 +173,20 @@ function CreateExam() {
                         </p>
                     </div>
 
-                    <div className="teacher-profile">
-                        <span className="teacher-notification">
-                            🔔
-                        </span>
+                    <div className="teacher-header-profile">
 
-                        <div className="teacher-avatar">
-                            T
+                        <div className="teacher-profile-avatar">
+                            {teacher.fullName?.[0].toUpperCase()}
                         </div>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit}>
 
-                    {/* EXAM INFORMATION */}
 
                     <section className="create-exam-section">
 
                         <div className="section-heading">
-                            <div className="section-heading-icon">
-                                📋
-                            </div>
 
                             <div>
                                 <h2>Exam Information</h2>
@@ -286,6 +298,79 @@ function CreateExam() {
                                 </small>
                             </div>
 
+                            <div className="form-group full-width">
+                                <label>
+                                    Marks per Question <span>*</span>
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="questionMarks"
+                                    placeholder="Enter marks per questions"
+                                    value={examData.questionMarks}
+                                    onChange={handleExamChange}
+                                    required
+                                />
+
+                            </div>
+
+
+                            <div className="form-group full-width">
+
+                                <label>
+                                    Allow Negative Markings <span>*</span>
+                                </label>
+
+                                <div className="radio-group">
+
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            name="negativeMarkings"
+                                            value="true"
+                                            checked={isNegativeMarkings === true}
+                                            onChange={() => setIsNegativeMarkings(true)}
+                                        />
+                                        Yes
+                                    </label>
+
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            name="negativeMarkings"
+                                            value="false"
+                                            checked={isNegativeMarkings === false}
+                                            onChange={() => setIsNegativeMarkings(false)}
+                                        />
+                                        No
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+
+                            {
+                                isNegativeMarkings ? <div className="form-group full-width">
+                                    <label>
+                                        Enter Negative Marks <span>*</span>
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        name="negativeMarks"
+                                        placeholder="Enter negative marke"
+                                        value={examData.negativeMarks}
+                                        onChange={handleExamChange}
+                                        required
+                                        min="0"
+                                        max={examData.questionMarks}
+                                        step="0.5"
+                                    />
+
+                                </div> : null
+                            }
+
                         </div>
 
                     </section>
@@ -298,14 +383,12 @@ function CreateExam() {
                         <div className="questions-header">
 
                             <div className="section-heading">
-                                <div className="section-heading-icon">
-                                    ❓
-                                </div>
+
 
                                 <div>
                                     <h2>Questions</h2>
                                     <p>
-                                        Add multiple-choice questions to your exam.
+                                        Add multiple-choice questions for your exam.
                                     </p>
                                 </div>
                             </div>
@@ -349,7 +432,7 @@ function CreateExam() {
                                                     removeQuestion(question.id)
                                                 }
                                             >
-                                                🗑 Remove
+                                                Remove
                                             </button>
                                         )}
 
@@ -421,6 +504,7 @@ function CreateExam() {
                                                                 optionIndex
                                                             )
                                                         }
+                                                        
                                                     />
 
                                                     <span className="option-label">
@@ -466,6 +550,7 @@ function CreateExam() {
                         >
                             + Add Another Question
                         </button>
+
                         {error && (
                             <p className="password-error">
                                 {error}
@@ -479,20 +564,19 @@ function CreateExam() {
 
                     <div className="create-exam-actions">
 
-                        <button
-                            type="button"
-                            className="cancel-exam-btn"
+                        <button type="button" className="cancel-exam-btn"
+                        onClick={()=>{
+                            navigate(`/teacher/${teacher.username}/dashboard`)
+                        }}
                         >
                             Cancel
                         </button>
 
-                        <button
-                            type="submit"
-                            className="create-exam-btn"
-                        >
+                        <button type="submit" className="create-exam-btn" >
+
                             Create Exam
                         </button>
-                        
+
 
                     </div>
 

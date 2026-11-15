@@ -1,11 +1,31 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import StudentSidebar from "../../components/StudentSidebar";
 import "../../styles/ChangePassword.css";
+import axios from "axios";
+import AfterLogout from "../../components/AfterLogout";
 
 const ChangePassword = () => {
     const navigate = useNavigate();
+    // const[username,setusername] = useState("");
+    // let username;
+    // username = useParams().username;
+    // console.log(username)
 
+    const [username,setUsername] = useState("");
+    const [isLoading,setIsLoading] = useState(false);
+
+
+    const fetchUsername = async()=>{
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`/api/v1/student/dashboard`);
+            setUsername(response.data.data.username);
+            setIsLoading(false); 
+        } catch (error) {
+            console.error("Error fetching user name ",error)
+        }
+    }
     const [passwordData, setPasswordData] = useState({
         currentPassword: "",
         newPassword: "",
@@ -38,7 +58,7 @@ const ChangePassword = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const {
@@ -69,21 +89,41 @@ const ChangePassword = () => {
             return;
         }
 
-        // Later:
-        // axios.patch("/api/v1/users/change-password", {
-        //   currentPassword,
-        //   newPassword
-        // });
-
-        console.log({
-            currentPassword,
-            newPassword,
+        const response = await axios.patch("/api/v1/student/change-password", {
+          currentPassword,
+          newPassword
         });
 
+        // console.log({
+        //     currentPassword,
+        //     newPassword,
+        // });
+
+      
         alert("Password changed successfully!");
 
-        navigate("/student/profile");
+        navigate(`/student/${username}/profile`);
     };
+
+    useEffect(()=>{
+        setIsLoading(true);
+        fetchUsername();
+        setIsLoading(false);
+    },[]);
+
+
+    if(isLoading){
+        return (
+            <div className="loading">
+                <p>Loading.......</p>
+            </div>
+        )
+    }
+
+    if(!username && !isLoading){
+        return <AfterLogout role = "student"/> 
+    }
+
 
     return (
         <div className="student-page">
@@ -106,9 +146,6 @@ const ChangePassword = () => {
                     <div className="password-card">
 
                         <div className="password-card-header">
-                            <div className="password-icon">
-                                🔐
-                            </div>
 
                             <div>
                                 <h2>Update Your Password</h2>
@@ -120,7 +157,6 @@ const ChangePassword = () => {
 
                         <form onSubmit={handleSubmit}>
 
-                            {/* Current Password */}
                             <div className="password-field">
                                 <label htmlFor="currentPassword">
                                     Current Password
@@ -152,7 +188,6 @@ const ChangePassword = () => {
                                 </div>
                             </div>
 
-                            {/* New Password */}
                             <div className="password-field">
                                 <label htmlFor="newPassword">
                                     New Password
@@ -223,7 +258,7 @@ const ChangePassword = () => {
                             {/* Error */}
                             {error && (
                                 <div className="password-error">
-                                    ⚠️ {error}
+                                    {error}
                                 </div>
                             )}
 
@@ -244,7 +279,7 @@ const ChangePassword = () => {
                                     type="button"
                                     className="cancel-password-btn"
                                     onClick={() =>
-                                        navigate("/student/profile")
+                                        navigate(`/student/${username}/profile`)
                                     }
                                 >
                                     Cancel
@@ -262,6 +297,7 @@ const ChangePassword = () => {
                     </div>
                 </div>
             </main>
+
         </div>
     );
 };

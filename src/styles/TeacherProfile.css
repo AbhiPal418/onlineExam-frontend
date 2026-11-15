@@ -1,0 +1,321 @@
+.teacher-profile-page {
+    min-height: 100vh;
+    background: #f8fafc;
+    display: flex;
+}
+
+/* MAIN CONTENT */
+
+.teacher-profile-main {
+    flex: 1;
+    min-width: 0;
+    padding: 35px 45px;
+    box-sizing: border-box;
+}
+
+/* Header */
+
+.teacher-profile-header {
+    margin-bottom: 25px;
+    margin-top: 25px;
+}
+
+.teacher-profile-header h1 {
+    font-size: 26px;
+    color: #1e293b;
+    margin: 0 0 7px;
+}
+
+.teacher-profile-header p {
+    color: #64748b;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Profile Card */
+
+.teacher-profile-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 25px;
+}
+
+.teacher-profile-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: #e0e7ff;
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.teacher-profile-details {
+    flex: 1;
+}
+
+.teacher-profile-details h2 {
+    font-size: 21px;
+    color: #1e293b;
+    margin: 0 0 5px;
+}
+
+.teacher-profile-details>p {
+    color: #64748b;
+    font-size: 13px;
+    margin: 0 0 10px;
+}
+
+.teacher-profile-email {
+    margin-top: 12px !important;
+}
+
+.teacher-role-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    background: #eefff0;
+    color: #26cf4e;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.teacher-role-badge-h {
+    display: inline-block;
+    padding: 5px 12px;
+    background: #eef1fd;
+    color: #3d79da;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.teacher-edit-profile-btn {
+    padding: 10px 16px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.teacher-edit-profile-btn:hover {
+    background: #4338ca;
+}
+
+/* Statistics */
+
+.teacher-profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.teacher-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.teacher-stat-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 21px;
+}
+
+.teacher-stat-icon.purple {
+    background: #eef2ff;
+}
+
+.teacher-stat-icon.green {
+    background: #dcfce7;
+}
+
+.teacher-stat-icon.orange {
+    background: #ffedd5;
+}
+
+.teacher-stat-card h3 {
+    font-size: 23px;
+    color: #1e293b;
+    margin: 0 0 4px;
+}
+
+.teacher-stat-card p {
+    color: #64748b;
+    font-size: 12px;
+    margin: 0;
+}
+
+/* Information Sections */
+
+.teacher-profile-section {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.teacher-section-heading {
+    margin-bottom: 22px;
+}
+
+.teacher-section-heading h2 {
+    color: #1e293b;
+    font-size: 18px;
+    margin: 0 0 6px;
+}
+
+.teacher-section-heading p {
+    color: #64748b;
+    font-size: 13px;
+    margin: 0;
+}
+
+.teacher-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px 35px;
+}
+
+.teacher-info-item label {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    margin-bottom: 7px;
+}
+
+.teacher-info-item p {
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Security */
+
+.teacher-security-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.teacher-security-item h3 {
+    color: #1e293b;
+    font-size: 14px;
+    margin: 0 0 6px;
+    text-align: left;
+}
+
+.teacher-security-item p {
+    color: #64748b;
+    font-size: 12px;
+    margin: 0;
+}
+
+.teacher-security-item button {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    padding: 9px 13px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.teacher-security-item button:hover {
+    background: #f1f5f9;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+    .teacher-profile-main {
+        margin-left: 0;
+        padding: 25px;
+    }
+}
+
+@media (max-width: 768px) {
+    .teacher-profile-main {
+        padding: 18px;
+    }
+
+    .teacher-profile-card {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .teacher-profile-actions {
+        width: 100%;
+    }
+
+    .teacher-edit-profile-btn {
+        width: 100%;
+    }
+
+    .teacher-profile-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .teacher-info-grid {
+
+        grid-template-columns: repeat(1, 1fr);
+    }
+
+    .teacher-profile-section {
+        padding: 20px;
+    }
+
+    .teacher-profile-avatar {
+        align-items: center;
+        margin: auto;
+    }
+
+    .teacher-security-item {
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .teacher-security-item h3,
+    .teacher-security-item h3 {
+        text-align: center;
+    }
+
+    .teacher-profile-details {
+        align-items: center;
+        margin: auto;
+    }
+}
+
+.teacher-profile-page {
+    background: rgb(172, 31, 31) !important;
+}

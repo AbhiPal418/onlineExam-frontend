@@ -1,127 +1,131 @@
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "../styles/Home.css";
 
 function Home() {
-  return (
-    <>
-      <Navbar />
 
-      <main>
+    
+    return (
+        <>
+            <Navbar />
 
-        {/* Hero Section */}
-        <section className="hero" id="home">
+            <main>
 
-          <div className="hero-content">
-            
-            <img src="" alt="" className="hero-icon" />
+                {/* Hero Section */}
+                <section className="hero" id="home">
 
-            <h1>
-              Host and Attend Exams in One Place
-              <span> Simple & Smart</span>
-            </h1>
+                    <div className="hero-content">
 
-            <p className="hero-description">
-              Create, manage and attend examinations from one
-              powerful platform designed for teachers and students.
-            </p>
+                        <h1>
+                            Host and Attend Exams in One Place
+                            <span> Simple & Smart</span>
+                        </h1>
 
-            <div className="hero-buttons">
-              <button className="primary-btn">
-                Get Started →
-              </button>
+                        <p className="hero-description">
+                            Create, manage and attend examinations from one
+                            powerful platf orm designed for teachers and students.
+                        </p>
 
-              <button className="secondary-btn">
-                Learn More
-              </button>
-            </div>
-
-          </div>
-
-          <div className="hero-image">
-
-            <div className="exam-card">
-              <div className="card-header">
-                  <span>Java-Programming-Test-1234</span>
-              </div>
-
-              <div className="progress-bar">
-                <div className="progress"></div>
-              </div>
-
-              <p>Question 6 of 20</p>
-
-              <div className="question">
-                6. What is JVM?
-              </div>
-
-              <div className="option">
-                Java Variable Method
-              </div>
-
-              <div className="option active">
-                Java Virtual Machine
-              </div>
-
-              <div className="option">
-                Joint Virtual Memory
-              </div>
-
-              <div className="option">
-                Java Virtual Memory
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
+                        <div className="hero-buttons">
+                            <Link to={`/register`}>
+                                <button className="primary-btn">
+                                    Get Started →
+                                </button>
+                            </Link>
 
 
-        {/* Features Section */}
+                            <button className="secondary-btn">
+                                Learn More
+                            </button>
+                        </div>
 
-        <section className="features" id="features">
+                    </div>
 
-          <div className="section-title">
-            <p>WHY EXAMPORTAL?</p>
-            <h2>Everything You Need for Online Exams</h2>
-          </div>
+                    <div className="hero-image">
 
-          <div className="feature-grid">
+                        <div className="exam-card">
+                            <div className="card-header">
+                                <span>Java-Programming-Test-1234</span>
+                            </div>
 
-            <div className="feature-card">
-              <div className="feature-icon"></div>
-              <h3>For Teachers</h3>
-              <p>
-                Create exams, manage questions and track
-                student performance easily.
-              </p>
-            </div>
+                            <div className="progress-bar">
+                                <div className="progress"></div>
+                            </div>
 
-            <div className="feature-card">
-              <div className="feature-icon"></div>
-              <h3>For Students</h3>
-              <p>
-                Attend exams, track your results and improve
-                your learning progress.
-              </p>
-            </div>
+                            <p>Question 6 of 20</p>
 
-            <div className="feature-card">
-              <div className="feature-icon"></div>
-              <h3>Instant Results</h3>
-              <p>
-                Automatic evaluation and fast
-                examination results.
-              </p>
-            </div>
+                            <div className="question">
+                                6. What is JVM?
+                            </div>
 
-          </div>
+                            <div className="option">
+                                Java Variable Method
+                            </div>
 
-        </section>
+                            <div className="option active">
+                                Java Virtual Machine
+                            </div>
 
-      </main>
-    </>
-  );
+                            <div className="option">
+                                Joint Virtual Memory
+                            </div>
+
+                            <div className="option">
+                                Java Virtual Memory
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                {/* Features Section */}
+
+                <section className="features" id="features">
+
+                    <div className="section-title">
+                        <p>WHY EXAMPORTAL?</p>
+                        <h2>Everything You Need for Online Exams</h2>
+                    </div>
+
+                    <div className="feature-grid">
+
+                        <div className="feature-card">
+                            <div className="feature-icon"></div>
+                            <h3>For Teachers</h3>
+                            <p>
+                                Create exams, manage questions and track
+                                student performance easily.
+                            </p>
+                        </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon"></div>
+                            <h3>For Students</h3>
+                            <p>
+                                Attend exams, track your results and improve
+                                your learning progress.
+                            </p>
+                        </div>
+
+                        <div className="feature-card">
+                            <div className="feature-icon"></div>
+                            <h3>Instant Results</h3>
+                            <p>
+                                Automatic evaluation and fast
+                                examination results.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </main>
+        </>
+    );
 }
 
 export default Home;

@@ -1,210 +1,295 @@
-import { useEffect ,useState} from "react";
+
+import { useState, useEffect } from "react";
 import StudentSidebar from "../../components/StudentSidebar";
 import "../../styles/MyResults.css";
 import axios from "axios";
-function MyResults() {
-    // Temporary data
-    // const results = [
-    //     {
-    //         id: 1,
-    //         exam: "Operating System",
-    //         date: "Aug 28, 2026",
-    //         score: 35,
-    //         total: 40,
-    //         percentage: 88,
-    //         status: "Passed",
-    //     },
-    //     {
-    //         id: 2,
-    //         exam: "Computer Networks",
-    //         date: "Aug 20, 2026",
-    //         score: 38,
-    //         total: 50,
-    //         percentage: 76,
-    //         status: "Passed",
-    //     },
-    //     {
-    //         id: 3,
-    //         exam: "Software Engineering",
-    //         date: "Aug 15, 2026",
-    //         score: 46,
-    //         total: 50,
-    //         percentage: 92,
-    //         status: "Passed",
-    //     },
-    //     {
-    //         id: 4,
-    //         exam: "Database Management System",
-    //         date: "Aug 10, 2026",
-    //         score: 20,
-    //         total: 40,
-    //         percentage: 50,
-    //         status: "Failed",
-    //     },
-    // ];
+import { Link, useNavigate } from "react-router-dom";
+import AfterLogout from "../../components/AfterLogout";
 
-    const [results,setResults] = useState([]);
+function MyResults() {
+
+    const navigate = useNavigate();
+
+    const [results, setResults] = useState([]);
     const [user, setUser] = useState({});
-    
+    const [search, setSearch] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [userLoading, setUserLoading] = useState(true);
+
+    // Fetch student information
     const fetchStudentData = async () => {
         try {
-            const response = await axios.get("/api/v1/student/dashboard");
-            const myResult = await axios.get("/api/v1/student/my-results");
-            // setUsername(response.data.data.fullName);
-            // console.log(response);
-            // setAttemptedExams(response.data.data.attemptedExams);
+            const response = await axios.get(
+                "/api/v1/student/dashboard"
+            );
+
             setUser(response.data.data);
-            setResults(myResult.data.data)
+
         } catch (error) {
             console.error("Error fetching student data:", error);
+
+            if (error.response?.status === 401) {
+                setUser(null);
+            }
+        } finally {
+            setUserLoading(false);
         }
     };
 
-    useEffect(()=>{
-        fetchStudentData();
-    },[])
-    // console.log(results)
-    // const average =
-    //     results.reduce((acc, result) => acc + result.percentage, 0) /
-    //     results.length;
+    // Fetch all exam results
+    const getAllResults = async () => {
+        try {
+            setLoading(true);
 
-    // const passed = results.filter(
-    //     (result) => result.status === "Passed"
-    // ).length;
+            const response = await axios.get(
+                "/api/v1/student/my-results"
+            );
+
+            setResults(response.data.data || []);
+
+        } catch (error) {
+            console.error("Error fetching results:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Search exam results
+    const searchExamsResult = async () => {
+        try {
+            setLoading(true);
+
+            const response = await axios.get(
+                "/api/v1/student/search-result",
+                {
+                    params: {
+                        query: search.trim()
+                    }
+                }
+            );
+
+            setResults(response.data.data || []);
+
+        } catch (error) {
+            console.error("Error searching results:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch student information on component mount
+    useEffect(() => {
+        fetchStudentData();
+    }, []);
+
+    // Debounced search
+    useEffect(() => {
+
+        const delay = setTimeout(() => {
+
+            if (search.trim() === "") {
+                getAllResults();
+            } else {
+                searchExamsResult();
+            }
+
+        }, 100);
+
+        return () => clearTimeout(delay);
+
+    }, [search]);
+
+    // Handle logged-out student
+    if (userLoading) {
+        return (
+            <div className="loading-data">
+                <p>Loading...</p>
+            </div>
+        );
+    }
+
+    if (!user && !userLoading) {
+        return <AfterLogout role="student" />;
+    }
 
     return (
         <div className="results-layout">
+
             <StudentSidebar />
 
             <main className="results-main">
 
                 {/* Header */}
-
                 <div className="results-header">
+
                     <div>
-                        <h1>{user.fullName} your Previous Exam Results</h1>
-                        <p>Track your examination performance here.</p>
+                        <h1>
+                            {user.fullName}, your Previous Exam Results
+                        </h1>
                     </div>
 
                     <div className="results-profile">
-                        {/* <span>🔔</span> */}
 
-                        <div className="results-avatar">
-                            {user?.fullName?.[0]}
-                        </div>
+                        <Link to={`/student/${user.username}/profile`}>
+                            <div className="results-avatar">
+                                {user.fullName?.[0]}
+                            </div>
+                        </Link>
+
                     </div>
+
                 </div>
 
-                {/* Statistics */}
-
+                {/* Exam History */}
                 <div className="results-stats">
 
-                    <div className="result-stat-card">
-                        {/* <div className="result-stat-icon purple">
-                            📊
-                        </div> */}
-
-                        <div>
-                            <p>Total Exams</p>
-                            <h2>{results.length}</h2>
-                        </div>
-                    </div>
-
-
-                    <div className="result-stat-card">
-                        {/* <div className="result-stat-icon green">
-                            ✓
-                        </div> */}
-
-                        <div>
-                            <p>Exams Passed</p>
-                            {/* <h2>{passed}</h2> */}
-                        </div>
-                    </div>
-
-
-                    <div className="result-stat-card">
-                        {/* <div className="result-stat-icon blue">
-                            🏆
-                        </div> */}
-
-                        <div>
-                            <p>Average Score</p>
-                            {/* <h2>{average.toFixed(0)}%</h2> */}
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* Results Table */}
-
-                <section className="results-section">
-
                     <div className="results-section-header">
+
                         <div>
                             <h2>Exam History</h2>
                             <p>Your completed examinations</p>
                         </div>
 
-                        <button className="results-filter-btn">
-                            Filter
-                        </button>
                     </div>
 
+                    {/* Search */}
+                    <div className="exam-search">
 
-                    <div className="results-table-container">
+                        <input
+                            type="text"
+                            placeholder="Search exams..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
 
-                        <table className="results-table-std">
+                        {search !== "" && (
+                            <button
+                                onClick={() => setSearch("")}
+                                className="clear-search"
+                                type="button"
+                            >
+                                x
+                            </button>
+                        )}
 
-                            <thead>
-                                <tr>
-                                    <th>Exam</th>
-                                    <th>Score</th>
-                                    <th>Attempted</th>
-                                    <th>Total Question</th>
-                                    <th>Percentage</th>
-                                    {/* <th>Action</th> */}
-                                </tr>
-                            </thead>
+                    </div>
 
-                            <tbody>
+                </div>
 
-                                {results.map((result) => (
+                {/* Results Table */}
+                <section className="results-section">
 
-                                    <tr key={result._id}>
+                    {loading ? (
 
-                                        <td className="result-exam-name">
-                                            {result.exam.title}
-                                        </td>
+                        <div className="loading-data">
+                            <p>Loading...</p>
+                        </div>
 
-                                        <td>
-                                            {result.scoreObtained} / {result.totalScore}
-                                        </td>
-                                        <td>{result.attemptedQuestions}</td>
-                                        <td>{result.totalScore/4}</td>
-                                        <td>
-                                            <strong>{Math.round((result.scoreObtained/result.totalScore)*100)}%</strong>
-                                        </td>
+                    ) : (
 
-                                        {/* <td>
-                                            <button className="view-result-btn">
-                                                View Result
-                                            </button>
-                                        </td> */}
+                        <div className="results-table-container">
 
+                            <table className="results-table-std">
+
+                                <thead>
+                                    <tr>
+                                        <th>Exam</th>
+                                        <th>Created By</th>
+                                        <th>Score</th>
+                                        <th>Attempted</th>
+                                        <th>Total Question</th>
+                                        <th>Percentage</th>
+                                        {/* <th>View Exam</th> */}
                                     </tr>
+                                </thead>
 
-                                ))}
+                                <tbody>
 
-                            </tbody>
+                                    {results.length === 0 ? (
 
-                        </table>
+                                        <tr>
+                                            <td colSpan="6" className="no-results">
+                                                {search.trim()
+                                                    ? "No matching exams found"
+                                                    : "No Results Yet"}
+                                            </td>
+                                        </tr>
 
-                    </div>
+                                    ) : (
+
+                                        results.map((result) => (
+
+                                            <tr key={result._id}>
+
+                                                <td className="result-exam-name">
+                                                    {result.exam?.title || "Deleted Exam"}
+                                                </td>
+
+                                                <td>
+                                                    
+                                                    {result.exam.createdBy?.fullName}
+                                                </td>
+                                                <td>
+                                                    {result.scoreObtained} / {result.totalScore}
+                                                </td>
+
+                                                <td>
+                                                    {result.attemptedQuestions}
+                                                </td>
+
+                                                <td>
+                                                    {result.exam?.questionMarks
+                                                        ? result.totalScore / result.exam.questionMarks
+                                                        : "-"}
+                                                </td>
+
+                                                <td>
+                                                    <strong>
+                                                        {result.totalScore > 0
+                                                            ? Math.round(
+                                                                (result.scoreObtained / result.totalScore) * 100
+                                                            )
+                                                            : 0}%
+                                                    </strong>
+                                                </td>
+
+                                                {/* <td>
+                                                    <button
+                                                        className="view-btn"
+                                                        onClick={() =>
+                                                            navigate(
+                                                                `/student/${user.username}/view-result/${result.exam?._id}`,
+                                                                {
+                                                                    state: {
+                                                                        exam: result.exam,
+                                                                        student: user.username
+                                                                    }
+                                                                }
+                                                            )
+                                                        }
+                                                    >
+                                                        View
+                                                    </button>
+                                                </td> */}
+
+                                            </tr>
+
+                                        ))
+
+                                    )}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    )}
 
                 </section>
 
             </main>
+
         </div>
     );
 }

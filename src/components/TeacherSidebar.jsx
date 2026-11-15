@@ -1,14 +1,19 @@
+
 import axios from "axios";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function TeacherSidebar() {
 
     const location = useLocation();
-    const [teacher, setTeacher] = useState({});
     const navigate = useNavigate();
-    const fetchTeachserData = async () => {
+
+    const [teacher, setTeacher] = useState({});
+    const [showModal, setShowModal] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Fetch teacher data
+    const fetchTeacherData = async () => {
         try {
             const response = await axios.get("/api/v1/teacher/dashboard");
             setTeacher(response.data.data);
@@ -17,84 +22,180 @@ function TeacherSidebar() {
         }
     };
 
+    // Handle logout
     const handleLogout = async () => {
         try {
             const response = await axios.post("/api/v1/teacher/logout");
-            console.log(response.data)
+
             if (response.data.success) {
-                navigate(`/login`, {
+                setShowModal(false);
+                setIsOpen(false);
+
+                navigate("/login", {
                     state: {
                         role: "teacher"
                     }
                 });
             }
+
         } catch (error) {
-            console.error("Error while Logging out:", error);
+            console.error("Error while logging out:", error);
         }
+    };
 
-    }
+    // Close sidebar when navigating
+    const handleNavigation = () => {
+        setIsOpen(false);
+    };
+
+    // Fetch teacher data when component mounts
     useEffect(() => {
-        fetchTeachserData();
-    }, [])
+        fetchTeacherData();
+    }, []);
 
-
-    
     return (
-        <aside className="teacher-sidebar">
+        <>
+            {/* Mobile Menu Button */}
+            <button
+                className="menu-btn"
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                ☰
+            </button>
 
-            <div className="teacher-sidebar-logo">
-                <span>Test Zone</span>
-            </div>
+            {/* Sidebar Overlay */}
+            {isOpen && (
+                <div
+                    className="sidebar-overlay"
+                    onClick={() => setIsOpen(false)}
+                />
+            )}
 
-            <nav className="teacher-sidebar-menu">
+            {/* Teacher Sidebar */}
+            <aside className={`teacher-sidebar ${isOpen ? "show" : ""}`}>
 
-                <Link
-                    to={`/teacher/${teacher.username}/dashboard`}
-                    className={`teacher-sidebar-link ${location.pathname === `/teacher/${teacher.username}/dashboard` ? "active" : ""}`}
-                >
-                    Dashboard
-                </Link>
+                {/* Logo */}
+                <div className="teacher-sidebar-logo">
+                    <span>Test Zone</span>
+                </div>
 
-                <Link
-                    to={`/teacher/${teacher.username}/create-exam`}
-                    className={`teacher-sidebar-link ${location.pathname === `/teacher/${teacher.username}/create-exam` ? "active" : ""}`}
-                >
-                    Create Exam
-                </Link>
+                {/* Sidebar Navigation */}
+                <nav className="teacher-sidebar-menu">
 
-                <Link
-                    to={`/teacher/${teacher.username}/my-exams`}
-                    className={`teacher-sidebar-link ${location.pathname === `/teacher/${teacher.username}/my-exams` ? "active" : ""}`}
-                >
-                    My Exams
-                </Link>
+                    <Link
+                        to={`/teacher/${teacher.username}/dashboard`}
+                        onClick={handleNavigation}
+                        className={`teacher-sidebar-link ${
+                            location.pathname === `/teacher/${teacher.username}/dashboard`
+                                ? "active"
+                                : ""
+                        }`}
+                    >
+                        Dashboard
+                    </Link>
 
-                <Link
-                    to={`/teacher/${teacher.username}/exam-results`}
-                    className={`teacher-sidebar-link ${location.pathname === `/teacher/${teacher.username}/exam-results` ? "active" : ""}`}
-                >Results
-                </Link>
+                    <Link
+                        to={`/teacher/${teacher.username}/create-exam`}
+                        onClick={handleNavigation}
+                        className={`teacher-sidebar-link ${
+                            location.pathname === `/teacher/${teacher.username}/create-exam`
+                                ? "active"
+                                : ""
+                        }`}
+                    >
+                        Create Exam
+                    </Link>
 
-                <Link
-                    to={`/teacher/${teacher.username}/profile`}
-                    className={`teacher-sidebar-link ${location.pathname === `/teacher/${teacher.username}/profile` ? "active" : ""}`}
-                >
-                    Profile
-                </Link>
+                    <Link
+                        to={`/teacher/${teacher.username}/my-exams`}
+                        onClick={handleNavigation}
+                        className={`teacher-sidebar-link ${
+                            location.pathname === `/teacher/${teacher.username}/my-exams`
+                                ? "active"
+                                : ""
+                        }`}
+                    >
+                        My Exams
+                    </Link>
 
-            </nav>
+                    <Link
+                        to={`/teacher/${teacher.username}/exam-results`}
+                        onClick={handleNavigation}
+                        className={`teacher-sidebar-link ${
+                            location.pathname === `/teacher/${teacher.username}/exam-results`
+                                ? "active"
+                                : ""
+                        }`}
+                    >
+                        Results
+                    </Link>
 
-            <div className="teacher-sidebar-bottom">
-                {/* <Link to="/" className="teacher-sidebar-link"> */}
+                    <Link
+                        to={`/teacher/${teacher.username}/profile`}
+                        onClick={handleNavigation}
+                        className={`teacher-sidebar-link ${
+                            location.pathname === `/teacher/${teacher.username}/profile`
+                                ? "active"
+                                : ""
+                        }`}
+                    >
+                        Profile
+                    </Link>
 
-                <button onClick={handleLogout} className="logout-btn">
-                    <span>🚪</span>
-                    Logout
-                </button>
-                {/* </Link> */}
-            </div>
+                </nav>
 
-        </aside>
+                {/* Sidebar Bottom */}
+                <div className="teacher-sidebar-bottom">
+
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="logout-btn"
+                    >
+                        Logout
+                    </button>
+
+                </div>
+
+            </aside>
+
+            {/* Logout Confirmation Modal */}
+            {showModal && (
+
+                <div className="logout-modal-overlay">
+
+                    <div className="logout-modal">
+
+                        <h2>Logout</h2>
+
+                        <p>
+                            Are you sure you want to logout?
+                        </p>
+
+                        <div className="logout-modal-buttons">
+
+                            <button
+                                className="cancel-logout-btn"
+                                onClick={() => setShowModal(false)}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                className="confirm-logout-btn"
+                                onClick={handleLogout}
+                            >
+                                Yes, Logout
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
+
+        </>
     );
 }
 

@@ -26,7 +26,9 @@ function Exam() {
 
 
     // Current question
+    // console.log(exam);
     const question = exam.questions[currentQuestion];
+
     if (!question) {
         return (
             <div className="no-question-container">
@@ -72,18 +74,6 @@ function Exam() {
         }
     }, [timeLeft]);
 
-    // const fetchStudentData = async () => {
-    //     try {
-    //         const response = await axios.get("/api/v1/student/dashboard");
-    //         setUser(response.data.data);
-    //     } catch (error) {
-    //         console.error("Error fetching student data:", error);
-    //     }
-    // };
-
-    // useEffect(() => {
-    //     fetchStudentData();
-    // }, [])
 
     // Format Timer
     const formatTime = (time) => {
@@ -97,16 +87,24 @@ function Exam() {
 
 
     // Select Answer
-    const handleAnswer = (currentQuestion, optionIndex) => {
-        // console.log(currentQuestion.question)
-        setAnswers((prevAnswers) => ({
-            ...prevAnswers,
-            [currentQuestion._id]: optionIndex,
-        }));
+    const handleAnswer = (question, selectedOption) => {
+        setAnswers((prevAnswers) => {
+            // If the same option is clicked again, remove the answer
+            if (prevAnswers[question._id] === selectedOption) {
+                const updatedAnswers = { ...prevAnswers };
+                delete updatedAnswers[question._id];
+                // console.log(updatedAnswers)
+
+                return updatedAnswers;
+            }
+
+            return {
+                ...prevAnswers,
+                [question._id]: selectedOption
+            };
+        });
     };
 
-
-    // Next Question
     const handleNext = () => {
         if (currentQuestion < exam.questions.length - 1) {
             setCurrentQuestion((prev) => prev + 1);
@@ -138,8 +136,8 @@ function Exam() {
     // Submit Exam
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Exam ID:", examId);
-        console.log("Student Answers:", answers);
+        // console.log("Exam ID:", examId);
+        // console.log("Student Answers:", answers);
         const examData = {
             answers,
             examId
@@ -147,7 +145,7 @@ function Exam() {
         try {
             await submitExam(examData);
 
-            navigate(`/student/${student.fullName}/results`);
+            navigate(`/student/${student}/results`);
 
         } catch (error) {
             console.error("Error submitting exam:", error);
@@ -156,7 +154,9 @@ function Exam() {
 
 
     const answeredCount = Object.keys(answers).length;
-    // console.log(answers)
+
+
+
     return (
         <div className="exam-page">
 
@@ -171,7 +171,7 @@ function Exam() {
                 </div>
 
                 <div className="exam-timer">
-                    ⏱ {formatTime(timeLeft)}
+                    Remaining Time {formatTime(timeLeft)}
                 </div>
 
             </header>
@@ -215,15 +215,16 @@ function Exam() {
                                             type="radio"
                                             name={`question-${question._id}`}
                                             checked={answers[question._id] === option}
-                                            onChange={() => handleAnswer(question, option)}
+                                            onClick={() => {
+                                                handleAnswer(question, option)
+                                            }}
                                         />
 
                                         <span className="option-letter">
                                             {String.fromCharCode(65 + index)}
                                         </span>
 
-                                        <span>{option} {index}</span>
-
+                                        <span>{option}</span>
                                     </label>
 
                                 ))}
@@ -286,30 +287,22 @@ function Exam() {
                     </div>
 
 
+
                     <div className="question-grid">
-
-                        {exam.questions.map((_, index) => (
-
+                        {exam.questions.map((question, index) => (
                             <button
-                                key={index}
+                                key={question._id}
                                 className={`question-palette-btn
-                  ${currentQuestion === index
-                                        ? "current-question"
-                                        : ""
-                                    }
-                  ${answers[index] !== undefined
-                                        ? "answered-question"
-                                        : ""
-                                    }
-                `}
+                ${currentQuestion === index ? "current-question" : ""}
+                ${answers[question._id] !== undefined ? "answered-question" : ""}
+            `}
                                 onClick={() => setCurrentQuestion(index)}
                             >
                                 {index + 1}
                             </button>
-
                         ))}
-
                     </div>
+
 
 
                     <div className="palette-info">
@@ -350,10 +343,6 @@ function Exam() {
                 <div className="submit-modal-overlay">
 
                     <div className="submit-modal">
-
-                        <div className="submit-modal-icon">
-                            ⚠️
-                        </div>
 
                         <h2>Submit Exam?</h2>
 

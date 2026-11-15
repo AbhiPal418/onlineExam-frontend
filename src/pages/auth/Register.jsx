@@ -11,7 +11,10 @@ function Register() {
     const [rollNumber, setRollNumber] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error,setError] = useState("");
+    const [error, setError] = useState("");
+
+
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -22,16 +25,17 @@ function Register() {
                 email,
                 password,
             };
-            if(role === "teacher") {
+            if (role === "teacher") {
                 delete requestData.rollNumber;
             }
+            // console.log(requestData)
             const response = await axios.post(
                 `/api/v1/${role}/register`,
                 requestData
             );
 
-            console.log(response.data.data.fullName)
-            if(role === "teacher") {
+            // console.log(response.data.data.fullName)
+            if (role === "teacher") {
                 // console.log("hello1")
                 navigate(`/login`);
             } else {
@@ -42,7 +46,7 @@ function Register() {
 
         } catch (error) {
             // console.error(error);
-            setError(error.response?.data?.message||"")
+            setError(error.response?.data?.message || "")
         }
         // setFullName("");
         // setRollNumber("");
@@ -116,7 +120,8 @@ function Register() {
                                         <input
                                             type="text"
                                             placeholder="Enter your full name"
-                                            onChange={(e) => {setFullName(e.target.value)
+                                            onChange={(e) => {
+                                                setFullName(e.target.value)
                                                 setError("")
                                             }}
                                             required
@@ -129,7 +134,8 @@ function Register() {
                                         <input
                                             type="email"
                                             placeholder="Enter your email"
-                                            onChange={(e) => {setEmail(e.target.value)
+                                            onChange={(e) => {
+                                                setEmail(e.target.value)
                                                 setError("")
                                             }}
                                             required
@@ -142,11 +148,12 @@ function Register() {
                                         <input
                                             type="password"
                                             placeholder="Create a password"
-                                            onChange={(e) => {setPassword(e.target.value)
+                                            onChange={(e) => {
+                                                setPassword(e.target.value)
                                                 setError("")
                                             }}
                                             required
-                                            
+
                                         />
                                         {error && (
                                             <p className="password-error">
@@ -161,7 +168,8 @@ function Register() {
                                         <input
                                             type="text"
                                             placeholder="Enter your full name"
-                                            onChange={(e) => {setFullName(e.target.value)
+                                            onChange={(e) => {
+                                                setFullName(e.target.value)
                                                 setError("")
                                             }}
                                             required
@@ -173,8 +181,9 @@ function Register() {
                                         <label>Roll Number</label>
                                         <input
                                             type="text"
-                                            placeholder="Enter your roll number"
-                                            onChange={(e) => {setRollNumber(e.target.value)
+                                            p laceholder="Enter your roll number"
+                                            onChange={(e) => {
+                                                setRollNumber(e.target.value)
                                                 setError("")
                                             }}
                                             required
@@ -187,7 +196,8 @@ function Register() {
                                         <input
                                             type="email"
                                             placeholder="Enter your email"
-                                            onChange={(e) => {setEmail(e.target.value)
+                                            onChange={(e) => {
+                                                setEmail(e.target.value)
                                                 setError("")
                                             }}
                                             required
@@ -200,7 +210,8 @@ function Register() {
                                         <input
                                             type="password"
                                             placeholder="Create a password"
-                                            onChange={(e) => {setPassword(e.target.value)
+                                            onChange={(e) => {
+                                                setPassword(e.target.value)
                                                 setError("")
                                             }}
                                             required
@@ -222,7 +233,7 @@ function Register() {
                                 Create Account
                             </button>
 
-                        
+
 
                         </form>
 

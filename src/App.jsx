@@ -14,6 +14,15 @@ import StudentProfile from "./pages/student/StudentProfile";
 import ChangePassword from "./pages/student/ChangePassword";
 import MyExams from "./pages/teacher/MyExams";
 import ExamResults from "./pages/teacher/ExamResults";
+import EditExam from "./pages/teacher/EditExam";
+import TeacherProfile from "./pages/teacher/TeacherProfile";
+import EditStudentProfile from "./pages/student/EditStudentProfile";
+import ChangeTeacherPassword from "./pages/teacher/ChangeTeacherPassword";
+import EditTeacherProfile from "./pages/teacher/EditTeacherProfile";
+import ViewExam from "./pages/teacher/ViewExam";
+    
+
+
 
 function App() {
     return (
@@ -31,12 +40,18 @@ function App() {
                 <Route path="/student/:username/attempted-exams" element={<AttemptedExams />} />
                 <Route path="/student/:username/profile" element={<StudentProfile />} />
                 <Route path="/student/:username/change-password" element={<ChangePassword />} />
+                <Route path="/student/:username/edit-profile" element={<EditStudentProfile />} />
 
 
                 <Route path="/teacher/:username/dashboard" element={<TeacherDashboard />} />
                 <Route path="/teacher/:username/create-exam" element={<CreateExam />} />
                 <Route path="/teacher/:username/my-exams" element={<MyExams />} />
                 <Route path="/teacher/:username/exam-results" element={<ExamResults />} />
+                <Route path="/teacher/:username/edit-exam/:examId" element={<EditExam />} />
+                <Route path="/teacher/:username/profile" element={<TeacherProfile />} />
+                <Route path="/teacher/:username/change-password" element={<ChangeTeacherPassword />} />
+                <Route path="/teacher/:username/edit-profile" element={<EditTeacherProfile />} />
+                <Route path="/teacher/:username/view-exam/:examId" element={<ViewExam />} />
             </Routes>
         </BrowserRouter>
     );

@@ -3,27 +3,19 @@ import StudentSidebar from "../../components/StudentSidebar";
 import "../../styles/StudentProfile.css";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import AfterLogout from "../../components/AfterLogout";
 
 
 const StudentProfile = () => {
-    // Temporary data
-    // Later, replace this with data fetched from your backend/current-user context
-    // const [student] = useState({
-    //     fullName: "Abhi Pal",
-    //     username: "abhipal",
-    //     email: "abhi@example.com",
-    //     rollNumber: "CSE2023001",
-    //     role: "Student",
-    //     joinedDate: "September 2026",
-    //     attemptedExams: 8,
-    //     completedExams: 6,
-    //     averageScore: 78,
-    // });
+    
 
     const navigate = useNavigate();
-    const [student, setStudent] = useState({});
+    const [student, setStudent] = useState(null);
     const [email, setEmail] = useState("");
     const [rollNumber, setRoleNumber] = useState("");
+    const [isLoading,setIsLoading]  = useState(false)
+
+
     const fetchStudentData = async () => {
         try {
             const response = await axios.get("/api/v1/student/dashboard");
@@ -35,23 +27,29 @@ const StudentProfile = () => {
         }
     };
 
-    // const handlePasswordChange = async()=>{
-    //     navigate(`student/${student.fullName}/change-password`)
-
-    // }
 
     useEffect(() => {
+        setIsLoading(true);
         fetchStudentData();
+        setIsLoading(false);
     }, []);
-    let username = "";
-    for (let i = 0; i < 20; i++) {
-        if (email[i] !== '@') {
-            username += email[i];
-        } else {
-            username += rollNumber;
-            break;
-        }
+
+    const handleEditProfile = async()=>{
+        navigate(`/student/${student.username}/edit-profile`)
     }
+
+    if(isLoading){
+        return(
+            <div className="loading-data">
+                <p>Loading.......</p>
+            </div>
+        )
+    }
+    if (!student && !isLoading) {
+        return <AfterLogout role="student" />;
+    }
+
+
     return (
         <div className="student-page">
             <StudentSidebar />
@@ -72,16 +70,15 @@ const StudentProfile = () => {
                     </div>
 
                     <div className="profile-main-info">
-                        <h2>{student.fullName}</h2>
-                        <p>@{username}</p>
+                        <p>@{student.username}</p>
 
                         <span className="student-role">
-                            🎓 {student.role}
+                            {student.role}
                         </span>
                     </div>
 
-                    <button className="edit-profile-btn">
-                         Edit Profile
+                    <button className="edit-profile-btn" onClick={()=>handleEditProfile()}>
+                        Edit Profile
                     </button>
                 </section>
 
@@ -106,7 +103,7 @@ const StudentProfile = () => {
                             <div className="detail-item">
                                 <span className="detail-label">Username</span>
                                 <span className="detail-value">
-                                    @{username}
+                                    @{student.username}
                                 </span>
                             </div>
 
@@ -150,7 +147,6 @@ const StudentProfile = () => {
                         <div className="profile-stats">
 
                             <div className="profile-stat">
-                                {/* <div className="stat-icon">📝</div> */}
                                 <div>
                                     <span className="stat-value">
                                         {student.attemptedExams?.length}
@@ -161,17 +157,6 @@ const StudentProfile = () => {
                                 </div>
                             </div>
 
-                            {/* <div className="profile-stat">
-                                <div className="stat-icon">✅</div>
-                                <div>
-                                    <span className="stat-value">
-                                        {student.completedExams}
-                                    </span>
-                                    <span className="stat-label">
-                                        Completed Exams
-                                    </span>
-                                </div>
-                            </div> */}
 
                             <div className="profile-stat">
                                 {/* <div className="stat-icon">📊</div> */}

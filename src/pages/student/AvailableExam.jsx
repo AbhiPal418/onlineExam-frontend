@@ -1,9 +1,12 @@
 import { useState } from "react";
 import StudentSidebar from "../../components/StudentSidebar";
 import "../../styles/AvailableExams.css";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import axios from "axios";
+import AfterLogout from "../../components/AfterLogout";
+
+
 function AvailableExams() {
 
     const navigate = useNavigate();
@@ -11,61 +14,73 @@ function AvailableExams() {
     const [exams, setExams] = useState([]);
     const [user, setUser] = useState({});
     const [search, setSearch] = useState("");
-    const [attendingExam, setAttendingExam] = useState({});
-    // const [searchExams, setSearchExams] = useState([]);
+    const [userLoading, setUserLoading] = useState(true)
+    
+    const username = user.username
+
 
     const searchExamsA = async () => {
         try {
             setLoading(true)
-            const response = await axios.get(
-                `/api/v1/student/search-exams?query=${search}`
-            );
-            console.log(response)
+            const response = await axios.get("/api/v1/student/search-exams", {
+                params: {
+                    query: search
+                }
+            });
+            // console.log(response)
             setExams(response.data.data);
             setLoading(false)
         } catch (error) {
             console.error("Error searching exams:", error);
         }
     };
+
     const fetchStudentData = async () => {
         try {
             const response = await axios.get("/api/v1/student/dashboard");
-            // setUsername(response.data.data.fullName);
-            // console.log(response.data.data);
-            // setAttemptedExams(response.data.data.attemptedExams);
-            // console.log(user)
             setUser(response.data.data);
         } catch (error) {
-            console.error("Error fetching student data:", error);
+            console.error(error);
+        } finally {
+            setUserLoading(false);
         }
     };
+
     const getAllExams = async () => {
         try {
             setLoading(true);
-            const response = await axios.get("/api/v1/student/all-exams");
-            setExams(response.data.data);
-            setLoading(false);
-        } catch (error) {
-            console.error("Error fetching all exams:", error);
-        }
-    }
 
-    // const attendingExamSetting = async()=>{
-    //     for()
-    // }
+            const response = await axios.get("/api/v1/student/all-exams");
+
+            setExams(response.data.data);
+
+        } catch (error) {
+            console.error("Error fetching exams:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     useEffect(() => {
         fetchStudentData();
-        if (search === "") {
-            getAllExams();
-        } else {
-            searchExamsA();
-        }
-    }, [search])
+    }, [])
 
-    // console.log(exams)
-    const username = user.username
-    // console.log(username)
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            if (search.trim() === "") {
+                getAllExams();
+            } else {
+                searchExamsA();
+            }
+        }, 400);
+
+        return () => clearTimeout(delay);
+    }, [search]);
+
+    
     const handleStartExam = (examId, exam) => {
+        // console.log(username)
         // console.log(exam)
         navigate(`/student/${user.username}/attend-exam/${examId}`, {
             state: {
@@ -77,24 +92,49 @@ function AvailableExams() {
     };
 
 
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(max-width: 768px)");
+
+        const handleResize = (event) => {
+            if (!event.matches) {
+                setIsSidebarOpen(false);
+            }
+        };
+
+        mediaQuery.addEventListener("change", handleResize);
+
+        return () => {
+            mediaQuery.removeEventListener("change", handleResize);
+        };
+    }, []);
+
+    if (userLoading) {
+        return <div className="loader">Loading...</div>;
+    }
+
+    if (!user.username && !userLoading) {
+        return <AfterLogout role="student" />;
+    }
+    
     return (
         <div className="available-layout">
+
             <StudentSidebar />
 
             <main className="available-main">
 
-                {/* Header */}
                 <div className="available-header">
                     <div>
                         <h1>{user.fullName} here is your Available Exams</h1>
                     </div>
 
                     <div className="available-profile">
-                        <div className="available-notification"></div>
 
-                        <div className="available-avatar">
-                            {user.fullName?.[0]}
-                        </div>
+                        <Link to={`/student/${user.username}/profile`}>
+                            <div className="available-avatar">
+                                {user.fullName?.[0]}
+                            </div>
+                        </Link>
                     </div>
                 </div>
 
@@ -136,8 +176,10 @@ function AvailableExams() {
                                             <div className="available-exam-card" key={exam._id}>
                                                 <div className="available-exam-top">
 
-                                                <h2>{exam.title}</h2>
-                                                    <p className="available-status">{exam.status}</p>
+                                                    <h5>{exam.title}</h5>
+                                                    <span className={`exam-status ${exam.status.toLowerCase()}`} >
+                                                        {exam.status}
+                                                    </span>
                                                 </div>
                                                 <p className="available-teacher">
                                                     Created by <strong>{exam.createdBy.fullName}</strong>

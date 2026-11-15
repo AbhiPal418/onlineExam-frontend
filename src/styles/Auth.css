@@ -263,6 +263,14 @@
 }
 
 
+@media (max-width:1000px) {
+    .auth-info-content h1 {
+        font-size: 40px;
+        margin-bottom: 100px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    }
+
+}
 
 @media (max-width: 768px) {
 
@@ -297,7 +305,7 @@
 
 @media screen and (max-width: 500px) {
     body {
-        background: red;
+        /* background: red; */
     }
 }
 

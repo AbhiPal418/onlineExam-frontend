@@ -3,71 +3,70 @@ import TeacherSidebar from "../../components/TeacherSidebar";
 import "../../styles/TeacherDashboard.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import AfterLogout from "../../components/AfterLogout";
 
 function TeacherDashboard() {
 
-    // Temporary data — later fetched from backend
-    const recentExams = [
-        {
-            title: "Java Programming Fundamentals",
-            questions: 20,
-            students: 42,
-            status: "Published",
-            date: "Sep 3, 2026"
-        },
-        {
-            title: "Data Structures and Algorithms",
-            questions: 25,
-            students: 35,
-            status: "Published",
-            date: "Sep 1, 2026"
-        },
-        {
-            title: "Database Management System",
-            questions: 15,
-            students: 0,
-            status: "Draft",
-            date: "Aug 30, 2026"
-        }
-    ];
-
-    const recentActivity = [
-        {
-            student: "Rahul Sharma",
-            exam: "Java Programming",
-            score: "85%",
-            time: "10 minutes ago"
-        },
-        {
-            student: "Priya Das",
-            exam: "Data Structures",
-            score: "92%",
-            time: "25 minutes ago"
-        },
-        {
-            student: "Amit Kumar",
-            exam: "Java Programming",
-            score: "78%",
-            time: "1 hour ago"
-        }
-    ];
-
+    const [recentExams, setRecentExams] = useState([]);
     const [teacher, setTeacher] = useState({});
-
+    const [isLoading, setIsLoading] = useState(false);
+    const [totalAttemptInExam,setTotalAttemptInExams] = useState(0);
+    const [activeExams,setActivExams] = useState(0);
     const fetchTeachserData = async () => {
         try {
+
             const response = await axios.get("/api/v1/teacher/dashboard");
+            const totalAttemptsIn = await axios.get("/api/v1/teacher/total-attempt-in-exams");
+            const activeExamsLength = await axios.get("/api/v1/teacher/active-exams");
+            setActivExams(activeExamsLength.data.data.length)
+            setTotalAttemptInExams(totalAttemptsIn.data.data)
             setTeacher(response.data.data);
         } catch (error) {
             console.error("Error fetching teacher data:", error);
         }
     };
 
+    const fetchCreatedExams = async () => {
+        try {
+            const response = await axios.get("/api/v1/teacher/created-exams");
+            setRecentExams(response.data.data);
+        } catch (error) {
+            console.error("Error fetching exam data:", error);
+        }
+    };
+
+    const totalAttemptsOfExams = (recentExams) => {
+        let total = 0;
+        // console.log("hello" + recentExams?.length)
+        for (let i = 0; i < recentExams?.length; i++) {
+            total = total + recentExams[i]?.totalAttempts;
+        }
+        return total;
+    }
+
     useEffect(() => {
+        setIsLoading(true)
         fetchTeachserData();
+        fetchCreatedExams();
+        setIsLoading(false)
     }, [])
 
-    // console.log(teacher)
+
+    
+
+    if (isLoading) {
+        return (
+            <div className="loading-data">
+                <p>Loading........</p>
+            </div>
+        )
+    }
+
+    console.log(typeof(teacher))
+    if (!teacher && !isLoading) {
+        return <AfterLogout role="teacher" />;
+    }
+
     return (
         <div className="teacher-layout">
 
@@ -80,15 +79,10 @@ function TeacherDashboard() {
 
                     <div>
                         <h1>Good Morning, {teacher.fullName} </h1>
-                        <p>Here's what's happening with your exams today.</p>
+                        <p>Here's what's happening with your exams</p>
                     </div>
 
                     <div className="teacher-header-profile">
-
-                        {/* <div className="teacher-notification">
-                            🔔
-                        </div> */}
-
                         <div className="teacher-profile-avatar">
                             {teacher.fullName?.[0].toUpperCase()}
                         </div>
@@ -98,15 +92,10 @@ function TeacherDashboard() {
                 </header>
 
 
-                {/* Statistics */}
 
                 <section className="teacher-stats-grid">
 
                     <div className="teacher-stat-card">
-                        {/* <div className="teacher-stat-icon exams">
-                            📝
-                        </div> */}
-
                         <div>
                             <p>Total Exams</p>
                             <h2>{teacher.createdExams?.length}</h2>
@@ -114,13 +103,17 @@ function TeacherDashboard() {
                     </div>
 
                     <div className="teacher-stat-card">
-                        {/* <div className="teacher-stat-icon attempts">
-                            📋
-                        </div> */}
+                        <div>
+                            <p>Active Exams</p>
+                            <h2>{activeExams}</h2>
+                        </div>
+                    </div>
+
+                    <div className="teacher-stat-card">
 
                         <div>
                             <p>Total Attempts</p>
-                            <h2>356</h2>
+                            <h2>{totalAttemptInExam}</h2>
                         </div>
                     </div>
 
@@ -142,11 +135,11 @@ function TeacherDashboard() {
                             to={`/teacher/${teacher.username}/create-exam`}
                             className="create-exam-button"
                         >
-                            ➕ Create New Exam
+                            Create New Exam
                         </Link>
 
                         <Link
-                            to={`/teacher/${teacher.username}/exams`}
+                            to={`/teacher/${teacher.username}/my-exams`}
                             className="manage-exam-button"
                         >
                             Manage Exams
@@ -164,12 +157,11 @@ function TeacherDashboard() {
                     <div className="teacher-section-header">
                         <div>
                             <h2>Recent Exams</h2>
-                            <p>Your recently created examinations</p>
+                            <p>Your recently created exams</p>
                         </div>
 
                         <Link
-                            to={`/teacher/${teacher.username}/my-exams`}
-                            className="teacher-view-all"
+                            to={`/teacher/${teacher.username}/my-exams`} className="teacher-view-all"
                         >
                             View All →
                         </Link>
@@ -182,34 +174,22 @@ function TeacherDashboard() {
 
                             <div className="teacher-exam-item" key={index}>
 
-                                <div className="teacher-exam-icon">
-                                    📝
-                                </div>
-
                                 <div className="teacher-exam-info">
 
                                     <h3>{exam.title}</h3>
 
                                     <div className="teacher-exam-meta">
-                                        <span>{exam.questions} Questions</span>
+                                        <span>{exam.totalQuestion} Questions</span>
                                         <span>•</span>
-                                        <span>{exam.students} Students</span>
+                                        <span>{exam.totalAttempts} Students</span>
                                         <span>•</span>
-                                        <span>{exam.date}</span>
+                                        <span>{new Date(exam.createdAt).toLocaleDateString()}</span>
                                     </div>
 
                                 </div>
 
-                                <span
-                                    className={`exam-status ${exam.status.toLowerCase()}`}
-                                >
-                                    {exam.status}
+                                <span className={`exam-status ${exam.status.toLowerCase()}`}> {exam.status}
                                 </span>
-
-                                <button className="exam-more-btn">
-                                    ⋮
-                                </button>
-
                             </div>
 
                         ))}
@@ -219,47 +199,6 @@ function TeacherDashboard() {
                 </section>
 
 
-                {/* Recent Activity */}
-
-                <section className="teacher-dashboard-section">
-
-                    <div className="teacher-section-header">
-                        <div>
-                            <h2>Recent Student Activity</h2>
-                            <p>Latest exam submissions</p>
-                        </div>
-                    </div>
-
-
-                    <div className="teacher-activity-card">
-
-                        {recentActivity.map((activity, index) => (
-
-                            <div className="teacher-activity-item" key={index}>
-
-                                <div className="student-avatar">
-                                    {activity.student.charAt(0)}
-                                </div>
-
-                                <div className="activity-info">
-                                    <h3>{activity.student}</h3>
-                                    <p>
-                                        Completed {activity.exam}
-                                    </p>
-                                </div>
-
-                                <div className="activity-score">
-                                    <strong>{activity.score}</strong>
-                                    <span>{activity.time}</span>
-                                </div>
-
-                            </div>
-
-                        ))}
-
-                    </div>
-
-                </section>
 
             </main>
 
