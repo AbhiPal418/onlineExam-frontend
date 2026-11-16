@@ -34,8 +34,6 @@ function StudentDashboard() {
                 setIsAuthenticated(false);
             }
             console.error("Error fetching student data:", error);
-        } finally {
-            setIsLoading(false);
         }
     };
 
