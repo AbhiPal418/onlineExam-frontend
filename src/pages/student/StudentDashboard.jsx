@@ -72,7 +72,7 @@ function StudentDashboard() {
         return <div>Loading dashboard...</div>;
     }
 
-    if (!user && !isLoading) {
+    if (!user.username && !isLoading) {
         return <AfterLogout role="student" />;
     }
 
