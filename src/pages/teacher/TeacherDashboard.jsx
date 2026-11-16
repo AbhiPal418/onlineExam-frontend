@@ -4,7 +4,7 @@ import "../../styles/TeacherDashboard.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import AfterLogout from "../../components/AfterLogout";
 
 function TeacherDashboard() {

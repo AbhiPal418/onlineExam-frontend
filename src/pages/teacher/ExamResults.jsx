@@ -5,7 +5,7 @@ import TeacherSidebar from "../../components/TeacherSidebar";
 import "../../styles/ExamResults.css";
 import axios from "axios";
 import AfterLogout from "../../components/AfterLogout";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 
 function ExamResults() {
 

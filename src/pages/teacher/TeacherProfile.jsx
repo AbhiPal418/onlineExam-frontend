@@ -6,8 +6,7 @@ import "../../styles/TeacherProfile.css";
 import axios from "axios";
 import AfterLogout from "../../components/AfterLogout";
 
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, } from "react";
 
 
 function TeacherProfile() {

@@ -4,7 +4,7 @@ import TeacherSidebar from "../../components/TeacherSidebar";
 import "../../styles/MyExams.css";
 import axios from "axios";
 import AfterLogout from "../../components/AfterLogout";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, } from "react";
 
 
 const MyExams = () => {

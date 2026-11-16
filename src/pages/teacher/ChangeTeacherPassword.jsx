@@ -1,6 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import StudentSidebar from "../../components/StudentSidebar";
 import "../../styles/ChangePassword.css";
 import axios from "axios";
 import TeacherSidebar from "../../components/TeacherSidebar";

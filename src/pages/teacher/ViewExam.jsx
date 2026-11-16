@@ -5,8 +5,6 @@ import axios from "axios";
 
 import TeacherSidebar from "../../components/TeacherSidebar";
 import AfterLogout from "../../components/AfterLogout";
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import "../../styles/ViewExam.css";
 
 function ViewExam() {

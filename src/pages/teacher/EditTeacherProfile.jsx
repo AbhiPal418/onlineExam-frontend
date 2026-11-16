@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import StudentSidebar from "../../components/StudentSidebar";
 import AfterLogout from "../../components/AfterLogout";
 import "../../styles/EditStudentProfile.css";
 import TeacherSidebar from "../../components/TeacherSidebar";
