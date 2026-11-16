@@ -10,8 +10,9 @@ import AfterLogout from "../../components/AfterLogout";
 function StudentDashboard() {
     // console.log("hello world")
 
+
     const navigate = useNavigate();
-    // const [username, setUsername] = useState("");
+
     const [attemptedExams, setAttemptedExams] = useState([]);
     const [exams, setExams] = useState([]);
     const [user, setUser] = useState({});
@@ -19,50 +20,57 @@ function StudentDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-
-
     const fetchStudentData = async () => {
         try {
+            const [userResponse, attemptedResponse] = await Promise.all([
+                axios.get("/api/v1/student/dashboard"),
+                axios.get("/api/v1/student/attempted-exams")
+            ]);
 
-            const response = await axios.get("/api/v1/student/dashboard");
-            const attempted = await axios.get("/api/v1/student/attempted-exams");
-            setAttemptedExams(attempted.data.data);
-            setUser(response.data.data);
+            setUser(userResponse.data.data);
+            setAttemptedExams(attemptedResponse.data.data);
             setIsAuthenticated(true);
+
         } catch (error) {
             if (error.response?.status === 401) {
                 setIsAuthenticated(false);
             }
+
             console.error("Error fetching student data:", error);
+            throw error;
         }
     };
 
     const getAllExams = async () => {
         try {
-            setIsLoading(true)
             const response = await axios.get("/api/v1/student/all-exams");
             setExams(response.data.data);
-            setIsLoading(false)
+
         } catch (error) {
             console.error("Error fetching all exams:", error);
+            throw error;
         }
-    }
-
-
-    const handleStartExam = (examId, exam) => {
-        navigate(`/student/${user?.username}/attend-exam/${examId}`, {
-            state: {
-                exam: exam,
-                student: user.username
-            }
-        });
     };
 
     useEffect(() => {
-        setIsLoading(true)
-        fetchStudentData();
-        getAllExams();
-        setIsLoading(false)
+
+        const loadDashboard = async () => {
+            try {
+                setIsLoading(true);
+
+                await Promise.all([
+                    fetchStudentData(),
+                    getAllExams()
+                ]);
+
+            } catch (error) {
+                console.error("Dashboard loading failed:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadDashboard();
 
     }, []);
 
@@ -70,9 +78,11 @@ function StudentDashboard() {
         return <div>Loading dashboard...</div>;
     }
 
-    if (!user.username && !isLoading) {
+    if (!isAuthenticated) {
         return <AfterLogout role="student" />;
     }
+
+    // Your actual dashboard JSX below
 
 
     return (
