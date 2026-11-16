@@ -7,31 +7,15 @@ import TeacherSidebar from "../../components/TeacherSidebar";
 import AfterLogout from "../../components/AfterLogout";
 
 const ChangeTeacherPassword = () => {
+
     const navigate = useNavigate();
-    const location = useLocation();
-    // const[username,setusername] = useState("");
-    // const username =location.state?.username;
 
-    const [username,setUsername] = useState();
-    const fetchUsename = async()=>{
-        try {
-            setIsLoading(true);
-            const response = await axios.get(`/api/v1/teacher/dashboard`);
-            setUsername(response.data.data.username);
-            setIsLoading(false)
-            
-        } catch (error) {
-            console.error("Error fetching user name inside change password",error)
-        }
-    }
+    const [username, setUsername] = useState("");
 
-    useEffect(()=>{
-        setIsLoading(true);
-        fetchUsename();
-        setIsLoading(false);
-    })
-    // console.log(username)
-    const [isLoading,setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
     const [passwordData, setPasswordData] = useState({
         currentPassword: "",
         newPassword: "",
@@ -40,6 +24,42 @@ const ChangeTeacherPassword = () => {
 
     const [error, setError] = useState("");
 
+
+    // Fetch teacher information
+    const fetchUsername = async () => {
+        try {
+            const response = await axios.get(
+                "/api/v1/teacher/dashboard"
+            );
+
+            setUsername(response.data.data.username);
+            setIsAuthenticated(true);
+
+        } catch (error) {
+            console.error(
+                "Error fetching teacher username:",
+                error
+            );
+
+            if (error.response?.status === 401) {
+                setIsAuthenticated(false);
+            } else {
+                setError("Unable to load teacher information.");
+            }
+
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+    // Fetch teacher information on component mount
+    useEffect(() => {
+        fetchUsername();
+    }, []);
+
+
+    // Handle input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -52,8 +72,11 @@ const ChangeTeacherPassword = () => {
     };
 
 
+    // Handle password change
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        setError("");
 
         const {
             currentPassword,
@@ -82,35 +105,56 @@ const ChangeTeacherPassword = () => {
             );
             return;
         }
-        setIsLoading(true);
-        const response = await axios.patch("/api/v1/teacher/change-password", {
-          currentPassword,
-          newPassword
-        });
 
-        setIsLoading(false);
-     
-        alert("Password changed successfully!");
+        try {
+            setIsSaving(true);
 
-        navigate(`/teacher/${username}/profile`);
+            const response = await axios.patch(
+                "/api/v1/teacher/change-password",
+                {
+                    currentPassword,
+                    newPassword,
+                }
+            );
+
+            if (response.data.success) {
+                alert("Password changed successfully!");
+
+                navigate(`/teacher/${username}/profile`);
+            }
+
+        } catch (error) {
+            console.error("Password change error:", error);
+
+            setError(
+                error.response?.data?.message ||
+                "Unable to change password. Please try again."
+            );
+
+        } finally {
+            setIsSaving(false);
+        }
     };
 
 
-    if(isLoading){
+    // Loading screen
+    if (isLoading) {
         return (
             <div className="loading">
                 <p>Loading.......</p>
             </div>
-        )
+        );
     }
 
 
-    console.log("Hello",username)
-    if(!username && !isLoading){
-        return(
-            <AfterLogout role="teacher"/>
-        )
+    // Authentication check
+    if (!isAuthenticated) {
+        return <AfterLogout role="teacher" />;
     }
+
+
+    // Your change password JSX below
+
     return (
         <div className="student-page">
             <TeacherSidebar />
@@ -160,7 +204,7 @@ const ChangeTeacherPassword = () => {
                                         placeholder="Enter your current password"
                                     />
 
-                                    
+
                                 </div>
                             </div>
 
@@ -198,7 +242,7 @@ const ChangeTeacherPassword = () => {
                                     <input
                                         id="confirmPassword"
                                         type={
-                                           "password"
+                                            "password"
                                         }
                                         name="confirmPassword"
                                         value={passwordData.confirmPassword}
@@ -206,7 +250,7 @@ const ChangeTeacherPassword = () => {
                                         placeholder="Re-enter your new password"
                                     />
 
-                        
+
                                 </div>
                             </div>
 

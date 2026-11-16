@@ -11,9 +11,10 @@ import TeacherSidebar from "../../components/TeacherSidebar";
 
 function EditTeacherProfile() {
 
+
     const navigate = useNavigate();
 
-    const [teacher, setTeacher] = useState({});
+    const [teacher, setTeacher] = useState(null);
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -28,11 +29,9 @@ function EditTeacherProfile() {
     const [success, setSuccess] = useState("");
 
 
-    // Fetch current student information
+    // Fetch current teacher information
     const fetchTeacherData = async () => {
-
         try {
-
             const response = await axios.get(
                 "/api/v1/teacher/dashboard"
             );
@@ -49,24 +48,23 @@ function EditTeacherProfile() {
             setIsAuthenticated(true);
 
         } catch (error) {
-
-            console.error("Error fetching student:", error);
+            console.error("Error fetching teacher:", error);
 
             if (error.response?.status === 401) {
                 setIsAuthenticated(false);
             } else {
-                setError("Unable to load your profile. Please try again.");
+                setError(
+                    "Unable to load your profile. Please try again."
+                );
             }
 
         } finally {
-
             setIsLoading(false);
-
         }
-
     };
 
 
+    // Fetch teacher information on mount
     useEffect(() => {
         fetchTeacherData();
     }, []);
@@ -74,7 +72,6 @@ function EditTeacherProfile() {
 
     // Handle input changes
     const handleChange = (e) => {
-
         const { name, value } = e.target;
 
         setFormData((prev) => ({
@@ -84,13 +81,11 @@ function EditTeacherProfile() {
 
         setError("");
         setSuccess("");
-
     };
 
 
     // Handle profile update
     const handleSubmit = async (e) => {
-
         e.preventDefault();
 
         setError("");
@@ -104,6 +99,7 @@ function EditTeacherProfile() {
             return;
         }
 
+        // Email validation
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             setError("Please enter a valid email address.");
             return;
@@ -115,7 +111,6 @@ function EditTeacherProfile() {
         }
 
         try {
-
             setIsSaving(true);
 
             const response = await axios.post(
@@ -129,40 +124,39 @@ function EditTeacherProfile() {
                 }
             );
 
-            if (response.data.success) {
-
-                const updatedTeacher = response.data.data;
-
-                setTeacher(updatedTeacher);
-
-                setFormData({
-                    fullName: updatedTeacher.fullName,
-                    email: updatedTeacher.email
-                });
-
-                setSuccess("Your profile has been updated successfully.");
-
+            if (!response.data.success) {
+                throw new Error("Profile update failed.");
             }
-            navigate(`/teacher/${response.data.data.username}/profile`)
+
+            const updatedTeacher = response.data.data;
+
+            setTeacher(updatedTeacher);
+
+            setFormData({
+                fullName: updatedTeacher.fullName,
+                email: updatedTeacher.email
+            });
+
+            setSuccess(
+                "Your profile has been updated successfully."
+            );
+
+            navigate(`/teacher/${updatedTeacher.username}/profile`);
 
         } catch (error) {
-
             console.error("Profile update error:", error);
 
             setError(
                 error.response?.data?.message ||
+                error.message ||
                 "Unable to update your profile. Please try again."
             );
 
         } finally {
-
             setIsSaving(false);
-
         }
-
     };
 
-   
 
     // Loading screen
     if (isLoading) {
@@ -179,6 +173,8 @@ function EditTeacherProfile() {
         return <AfterLogout role="teacher" />;
     }
 
+
+    // Your edit profile JSX below
 
     return (
 
@@ -307,7 +303,7 @@ function EditTeacherProfile() {
                         </div>
 
 
-                        
+
 
 
                         {/* Messages */}

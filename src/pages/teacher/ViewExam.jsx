@@ -5,18 +5,30 @@ import axios from "axios";
 
 import TeacherSidebar from "../../components/TeacherSidebar";
 import AfterLogout from "../../components/AfterLogout";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import "../../styles/ViewExam.css";
 
 function ViewExam() {
 
+
+    // ---------------- STATES ----------------
+
     const { examId } = useParams();
+
     const navigate = useNavigate();
 
     const [exam, setExam] = useState(null);
+
     const [isLoading, setIsLoading] = useState(true);
+
     const [error, setError] = useState("");
 
-    // Fetch exam details
+    const [authStatus, setAuthStatus] = useState("loading");
+
+
+    // ---------------- FETCH EXAM DETAILS ----------------
+
     useEffect(() => {
 
         const controller = new AbortController();
@@ -24,8 +36,14 @@ function ViewExam() {
         const fetchExam = async () => {
 
             try {
+
                 setIsLoading(true);
+
+                setExam(null);
+
                 setError("");
+
+                setAuthStatus("loading");
 
                 const response = await axios.get(
                     `/api/v1/teacher/get-exam/${examId}`,
@@ -34,21 +52,40 @@ function ViewExam() {
                     }
                 );
 
-                const examData = response.data.data?.exam ||
+                const examData =
+                    response.data.data?.exam ??
                     response.data.data;
+
+                if (!examData) {
+                    throw new Error("Exam details not found.");
+                }
 
                 setExam(examData);
 
+                setAuthStatus("authenticated");
+
             } catch (error) {
 
-                if (error.code !== "ERR_CANCELED") {
+                if (error.code === "ERR_CANCELED") {
+                    return;
+                }
 
-                    console.error("Error fetching exam:", error);
+                console.error("Error fetching exam:", error);
+
+                if (error.response?.status === 401) {
+
+                    setExam(null);
+                    setAuthStatus("unauthenticated");
+
+                } else {
 
                     setError(
                         error.response?.data?.message ||
+                        error.message ||
                         "Unable to fetch exam details."
                     );
+
+                    setAuthStatus("authenticated");
                 }
 
             } finally {
@@ -58,36 +95,54 @@ function ViewExam() {
                 }
 
             }
+
         };
 
-        if (examId) {
-            fetchExam();
-        } else {
+
+        if (!examId) {
+
             setError("Invalid exam ID.");
+
+            setAuthStatus("authenticated");
+
             setIsLoading(false);
+
+        } else {
+
+            fetchExam();
+
         }
 
-        return () => controller.abort();
+
+        return () => {
+            controller.abort();
+        };
 
     }, [examId]);
 
 
-    // Calculate total marks
-    const totalMarks =
-        Number(exam?.totalQuestion || exam?.questions?.length || 0) *
-        Number(exam?.questionMarks || 0);
+    // ---------------- CALCULATE TOTAL MARKS ----------------
+
+    const totalMarks = (
+        Number(exam?.totalQuestion ?? exam?.questions?.length ?? 0) *
+        Number(exam?.questionMarks ?? 0)
+    );
 
 
-    // Check whether an option is the correct answer
+    // ---------------- CHECK CORRECT OPTION ----------------
+
     const isCorrectOption = (question, option, index) => {
 
-        const correctAnswer = question.correctAnswer;
+        const correctAnswer = question?.correctAnswer;
 
+        // If correctAnswer is an index
         if (typeof correctAnswer === "number") {
             return correctAnswer === index;
         }
 
+        // If correctAnswer is stored as option text
         if (typeof correctAnswer === "string") {
+
             return (
                 correctAnswer.trim().toLowerCase() ===
                 String(option).trim().toLowerCase()
@@ -95,8 +150,51 @@ function ViewExam() {
         }
 
         return false;
+
     };
 
+
+    // ---------------- CONDITIONAL RENDERING ----------------
+
+    // Loading
+    if (isLoading || authStatus === "loading") {
+
+        return (
+            <div className="loading-data">
+                <p>Loading exam details...</p>
+            </div>
+        );
+
+    }
+
+
+    // Authentication failure
+    if (authStatus === "unauthenticated") {
+
+        return <AfterLogout role="teacher" />;
+
+    }
+
+
+    // API error
+    if (error || !exam) {
+
+        return (
+            <div className="loading-data">
+
+                <p>{error || "Exam not found."}</p>
+
+                <button onClick={() => navigate(-1)}>
+                    Go Back
+                </button>
+
+            </div>
+        );
+
+    }
+
+
+    // Your existing exam details JSX goes below
 
     // Loading screen
     if (isLoading) {
@@ -162,17 +260,17 @@ function ViewExam() {
 
                 {/* Page Header */}
                 <div className="view-exam-header">
-                <div className="">
-                    <button
+                    <div className="">
+                        <button
                             className="back-to-exams-btn"
                             onClick={() => navigate(-1)}
                         >
                             ← Back to My Exams
                         </button>
-                </div>
+                    </div>
                     <div>
 
-                        
+
 
                         <h1>{exam.title}</h1>
 
@@ -312,9 +410,8 @@ function ViewExam() {
 
                                                 <div
                                                     key={optionIndex}
-                                                    className={`view-exam-option ${
-                                                        correct ? "correct-option" : ""
-                                                    }`}
+                                                    className={`view-exam-option ${correct ? "correct-option" : ""
+                                                        }`}
                                                 >
 
                                                     <span className="option-label">

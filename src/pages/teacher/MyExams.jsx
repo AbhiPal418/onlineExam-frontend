@@ -4,101 +4,333 @@ import TeacherSidebar from "../../components/TeacherSidebar";
 import "../../styles/MyExams.css";
 import axios from "axios";
 import AfterLogout from "../../components/AfterLogout";
+import { useCallback, useEffect, useState } from "react";
 
 
 const MyExams = () => {
-    const [exams, setExams] = useState([]);
-    const [search, setSearch] = useState("");
-    const [teacher, setTeacher] = useState({});
-    const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
-    const [totalAttemptInExams,setTotalAttemptInExams] = useState(0);
-
-    const [activeExams,setActiveExams] = useState([]);
-    const fetchTeacherData = async () => {
-        try {
-            const response = await axios.get("/api/v1/teacher/dashboard");
-            setTeacher(response.data.data);
-        } catch (error) {
-            console.error("Error fetching teacher data:", error);
-        }
-    };
-
-    const fetchTeachersExams = async () => {
-        try {
-            const response = await axios.get("/api/v1/teacher/created-exams");
-            const response2 = await axios.get("/api/v1/teacher/active-exams");
-            const totalAttemptsIn = await axios.get("/api/v1/teacher/total-attempt-in-exams");
-            setTotalAttemptInExams(totalAttemptsIn.data.data)
-            setActiveExams(response2.data.data)
-            setExams(response.data.data);
-        } catch (error) {
-            console.error("Error fetching teacher data:", error);
-        }
-    };
-
-
-    const changeExamStatus = async (examId) => {
-        try {
-            const response = await axios.post(`/api/v1/teacher/change-status/${examId}`)
-            if (response.data.success) {
-                fetchTeachersExams();
-                setSearch("")
-            }
-        } catch (error) {
-            console.error("Error while changing status ", error);
-        }
-    }
-
-    const searchedExams = async () => {
-        try {
-            setIsLoading(true);
-            const response = await axios.get(`/api/v1/teacher/search-exams`, {
-                params: {
-                    query: search
-                }
-            })
-            setExams(response.data.data)
-            setIsLoading(false)
-        } catch (error) {
-            console.error("Error searching exams ", error)
-        }
-    }
-
-    useEffect(() => {
-        setIsLoading(true);
-        fetchTeacherData();
-        if(search === ""){
-
-            fetchTeachersExams();
-        }else{
-            searchedExams();
-        }
-        setIsLoading(false)
-    }, []);
-
-    useEffect(()=>{
-        setIsLoading(true);
-        if(search === ""){
-            fetchTeachersExams();
-        }else{
-            searchedExams();
-        }
-        setIsLoading(false);
-    },[search])
   
 
-    if (isLoading) {
-        return (
-            <div className="loading-data">
-                <p>Loading.....</p>
-            </div>
-        )
+// ---------------- STATES ----------------
+
+const [exams, setExams] = useState([]);
+const [search, setSearch] = useState("");
+
+const [teacher, setTeacher] = useState(null);
+
+const navigate = useNavigate();
+
+const [isLoading, setIsLoading] = useState(true);
+const [authStatus, setAuthStatus] = useState("loading");
+
+const [totalAttemptInExams, setTotalAttemptInExams] = useState(0);
+const [activeExams, setActiveExams] = useState([]);
+
+const [errorMessage, setErrorMessage] = useState("");
+
+
+// ---------------- FETCH TEACHER DATA ----------------
+
+const fetchTeacherData = useCallback(async () => {
+
+    try {
+
+        const response = await axios.get(
+            "/api/v1/teacher/dashboard"
+        );
+
+        setTeacher(response.data.data);
+        setAuthStatus("authenticated");
+
+        return true;
+
+    } catch (error) {
+
+        if (error.response?.status === 401) {
+
+            setTeacher(null);
+            setAuthStatus("unauthenticated");
+
+            return false;
+        }
+
+        throw error;
     }
 
-    if (!teacher && !isLoading) {
-        return <AfterLogout role="teacher" />;
+}, []);
+
+
+// ---------------- FETCH ALL TEACHER EXAMS ----------------
+
+const fetchTeachersExams = useCallback(async () => {
+
+    const [
+        examsResponse,
+        activeExamsResponse,
+        attemptsResponse
+    ] = await Promise.all([
+
+        axios.get("/api/v1/teacher/created-exams"),
+
+        axios.get("/api/v1/teacher/active-exams"),
+
+        axios.get("/api/v1/teacher/total-attempt-in-exams")
+
+    ]);
+
+    setExams(examsResponse.data.data || []);
+
+    setActiveExams(activeExamsResponse.data.data || []);
+
+    setTotalAttemptInExams(
+        attemptsResponse.data.data || 0
+    );
+
+}, []);
+
+
+// ---------------- SEARCH EXAMS ----------------
+
+const searchedExams = useCallback(async (query, signal) => {
+
+    try {
+
+        const response = await axios.get(
+            "/api/v1/teacher/search-exams",
+            {
+                params: {
+                    query
+                },
+                signal
+            }
+        );
+
+        setExams(response.data.data || []);
+
+    } catch (error) {
+
+        if (error.code !== "ERR_CANCELED") {
+
+            console.error("Error searching exams:", error);
+
+            setExams([]);
+        }
+
+        throw error;
     }
+
+}, []);
+
+
+// ---------------- INITIAL FETCH ----------------
+
+useEffect(() => {
+
+    let isMounted = true;
+
+    const fetchInitialData = async () => {
+
+        try {
+
+            setIsLoading(true);
+            setAuthStatus("loading");
+            setErrorMessage("");
+
+            // Verify authentication first
+            const authenticated = await fetchTeacherData();
+
+            if (!isMounted) return;
+
+            if (!authenticated) return;
+
+            // Fetch dashboard data
+            await fetchTeachersExams();
+
+        } catch (error) {
+
+            console.error("Error loading dashboard:", error);
+
+            if (isMounted) {
+                setErrorMessage(
+                    "Unable to load dashboard. Please try again."
+                );
+            }
+
+            if (error.response?.status === 401 && isMounted) {
+                setTeacher(null);
+                setAuthStatus("unauthenticated");
+            }
+
+        } finally {
+
+            if (isMounted) {
+                setIsLoading(false);
+            }
+        }
+
+    };
+
+    fetchInitialData();
+
+    return () => {
+        isMounted = false;
+    };
+
+}, [fetchTeacherData, fetchTeachersExams]);
+
+
+// ---------------- SEARCH EFFECT ----------------
+
+useEffect(() => {
+
+    // Don't search before initial loading completes
+    if (isLoading || authStatus !== "authenticated") {
+        return;
+    }
+
+    const query = search.trim();
+
+    // Empty search: show all exams
+    if (!query) {
+
+        const fetchAll = async () => {
+
+            try {
+
+                await fetchTeachersExams();
+
+            } catch (error) {
+
+                console.error("Error fetching exams:", error);
+
+                if (error.response?.status === 401) {
+                    setTeacher(null);
+                    setAuthStatus("unauthenticated");
+                }
+            }
+        };
+
+        fetchAll();
+
+        return;
+    }
+
+    // Debounce search
+    const controller = new AbortController();
+
+    const timer = setTimeout(async () => {
+
+        try {
+
+            setIsLoading(true);
+
+            await searchedExams(query, controller.signal);
+
+        } catch (error) {
+
+            if (error.response?.status === 401) {
+                setTeacher(null);
+                setAuthStatus("unauthenticated");
+            }
+
+        } finally {
+
+            if (!controller.signal.aborted) {
+                setIsLoading(false);
+            }
+        }
+
+    }, 300);
+
+    return () => {
+
+        clearTimeout(timer);
+
+        controller.abort();
+
+    };
+
+}, [
+    search,
+    isLoading,
+    authStatus,
+    fetchTeachersExams,
+    searchedExams
+]);
+
+
+// ---------------- CHANGE EXAM STATUS ----------------
+
+const changeExamStatus = async (examId) => {
+
+    try {
+
+        const response = await axios.post(
+            `/api/v1/teacher/change-status/${examId}`
+        );
+
+        if (response.data.success) {
+
+            // Refresh dashboard data
+            await fetchTeachersExams();
+
+            setSearch("");
+
+        }
+
+    } catch (error) {
+
+        console.error("Error changing exam status:", error);
+
+        if (error.response?.status === 401) {
+            setTeacher(null);
+            setAuthStatus("unauthenticated");
+        }
+    }
+
+};
+
+
+// ---------------- CONDITIONAL RENDERING ----------------
+
+// Initial loading
+if (isLoading || authStatus === "loading") {
+
+    return (
+        <div className="loading-data">
+            <p>Loading...</p>
+        </div>
+    );
+
+}
+
+
+// Not authenticated
+if (authStatus === "unauthenticated") {
+
+    return <AfterLogout role="teacher" />;
+
+}
+
+
+// API error
+if (errorMessage) {
+
+    return (
+        <div className="loading-data">
+
+            <p>{errorMessage}</p>
+
+            <button onClick={() => window.location.reload()}>
+                Retry
+            </button>
+
+        </div>
+    );
+
+}
+
+
+// Render your existing dashboard JSX below
 
     return (
         <div className="teacher-page">

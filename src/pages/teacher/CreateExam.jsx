@@ -7,66 +7,98 @@ import AfterLogout from "../../components/AfterLogout";
 
 
 function CreateExam() {
-    const [teacher, setTeacher] = useState({});
+
+    const [teacher, setTeacher] = useState(null);
     const [isNegativeMarkings, setIsNegativeMarkings] = useState(false);
+
     const navigate = useNavigate();
-    const [isLoading,setIsLoading] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const [error, setError] = useState("");
+
+
+    // Fetch teacher data
     const fetchTeacherData = async () => {
-
         try {
+            const response = await axios.get(
+                "/api/v1/teacher/dashboard"
+            );
 
-            const response = axios.get(`/api/v1/teacher/dashboard`);
-            setTeacher((await response).data.data);
+            setTeacher(response.data.data);
+            setIsAuthenticated(true);
+
         } catch (error) {
-            console.error("Error while fetching Data " ,error)
-        }
-    }
-    useEffect(() => {
-        setIsLoading(true);
-        fetchTeacherData();
-        setIsLoading(false);
-    }, [])
+            console.error("Error while fetching data:", error);
 
+            if (error.response?.status === 401) {
+                setIsAuthenticated(false);
+            } else {
+                setError("Unable to load teacher information.");
+            }
+
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+    // Fetch teacher information on mount
+    useEffect(() => {
+        fetchTeacherData();
+    }, []);
+
+
+    // Exam data
     const [examData, setExamData] = useState({
         title: "",
         questions: [],
         timeLimit: 0,
-        createdBy: teacher?._id,
+        createdBy: "",
         totalQuestions: 0,
         password: "",
         questionMarks: 0,
         negativeMarks: 0,
     });
 
+
+    // Questions
     const [questions, setQuestions] = useState([
         {
             id: 1,
             question: "",
             options: ["", "", "", ""],
-            correctAnswer:null,
+            correctAnswer: null,
         },
     ]);
 
+
+    // Handle exam input changes
     const handleExamChange = (e) => {
         const { name, value } = e.target;
 
         setExamData((prev) => ({
             ...prev,
-            createdBy: teacher?._id,
             [name]: value,
         }));
     };
 
+
+    // Handle question changes
     const handleQuestionChange = (questionId, value) => {
         setQuestions((prev) =>
             prev.map((question) =>
-                question.id === questionId ? { ...question, question: value, } : question
+                question.id === questionId
+                    ? { ...question, question: value }
+                    : question
             )
         );
     };
 
+
+    // Handle option changes
     const handleOptionChange = (questionId, optionIndex, value) => {
         setQuestions((prev) =>
             prev.map((question) =>
@@ -83,6 +115,8 @@ function CreateExam() {
         );
     };
 
+
+    // Handle correct answer
     const handleCorrectAnswer = (questionId, optionIndex) => {
         setQuestions((prev) =>
             prev.map((question) =>
@@ -96,6 +130,8 @@ function CreateExam() {
         );
     };
 
+
+    // Add question
     const addQuestion = () => {
         setQuestions((prev) => [
             ...prev,
@@ -103,59 +139,84 @@ function CreateExam() {
                 id: Date.now(),
                 question: "",
                 options: ["", "", "", ""],
-                correctAnswer: "",
+                correctAnswer: null,
             },
         ]);
     };
 
-    const removeQuestion = (questionId) => {
-        if (questions.length === 1) {
-            return;
-        }
 
-        setQuestions((prev) =>
-            prev.filter(
+    // Remove question
+    const removeQuestion = (questionId) => {
+        setQuestions((prev) => {
+            if (prev.length === 1) {
+                return prev;
+            }
+
+            return prev.filter(
                 (question) => question.id !== questionId
-            )
-        );
+            );
+        });
     };
 
+
+    // Submit exam
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        setError("");
+
         try {
+            setIsSaving(true);
 
             const Edata = {
-                examData: examData,
-                questions: questions
+                examData: {
+                    ...examData,
+                    createdBy: teacher._id,
+                    totalQuestions: questions.length,
+                },
+                questions,
+            };
+
+            const response = await axios.post(
+                "/api/v1/teacher/create-exam",
+                Edata
+            );
+
+            if (response.data.success) {
+                navigate(`/teacher/${teacher.username}/dashboard`);
             }
 
-            const response = await axios.post(`/api/v1/teacher/create-exam`, Edata)
-            // alert("Exam created successfully");
-            // console.log(response.data.data)
-
-            navigate(`/teacher/${teacher.username}/dashboard`, {
-            });
         } catch (error) {
-            setError(error.response?.data?.message || "noerror");
-            // console.log("hello",error)
+            console.error("Exam creation error:", error);
 
+            setError(
+                error.response?.data?.message ||
+                "Unable to create exam. Please try again."
+            );
+
+        } finally {
+            setIsSaving(false);
         }
-
-        // alert("Exam created successfully!");
     };
 
 
-    if(isLoading){
-        return(
+    // Loading screen
+    if (isLoading) {
+        return (
             <div className="loading-data">
                 <p>Loading.......</p>
             </div>
-        )
+        );
     }
-    if (!teacher && !isLoading) {
+
+
+    // Authentication check
+    if (!isAuthenticated) {
         return <AfterLogout role="teacher" />;
     }
+
+
+    // Your create exam JSX below
 
     // console.log(error)
     return (
@@ -504,7 +565,7 @@ function CreateExam() {
                                                                 optionIndex
                                                             )
                                                         }
-                                                        
+
                                                     />
 
                                                     <span className="option-label">
@@ -565,9 +626,9 @@ function CreateExam() {
                     <div className="create-exam-actions">
 
                         <button type="button" className="cancel-exam-btn"
-                        onClick={()=>{
-                            navigate(`/teacher/${teacher.username}/dashboard`)
-                        }}
+                            onClick={() => {
+                                navigate(`/teacher/${teacher.username}/dashboard`)
+                            }}
                         >
                             Cancel
                         </button>

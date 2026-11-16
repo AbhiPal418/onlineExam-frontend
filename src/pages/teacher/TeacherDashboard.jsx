@@ -3,69 +3,226 @@ import TeacherSidebar from "../../components/TeacherSidebar";
 import "../../styles/TeacherDashboard.css";
 import { useState, useEffect } from "react";
 import axios from "axios";
+
+import { useCallback, useEffect, useState } from "react";
 import AfterLogout from "../../components/AfterLogout";
 
 function TeacherDashboard() {
 
+
+    // ---------------- STATES ----------------
+
     const [recentExams, setRecentExams] = useState([]);
-    const [teacher, setTeacher] = useState({});
-    const [isLoading, setIsLoading] = useState(false);
-    const [totalAttemptInExam,setTotalAttemptInExams] = useState(0);
-    const [activeExams,setActivExams] = useState(0);
-    const fetchTeachserData = async () => {
+
+    const [teacher, setTeacher] = useState(null);
+
+    const [isLoading, setIsLoading] = useState(true);
+
+    // loading | authenticated | unauthenticated
+    const [authStatus, setAuthStatus] = useState("loading");
+
+    const [totalAttemptInExam, setTotalAttemptInExams] = useState(0);
+
+    const [activeExams, setActivExams] = useState(0);
+
+    const [dashboardError, setDashboardError] = useState("");
+
+
+    // ---------------- FETCH TEACHER DATA ----------------
+
+    const fetchTeachserData = useCallback(async () => {
+
         try {
 
-            const response = await axios.get("/api/v1/teacher/dashboard");
-            const totalAttemptsIn = await axios.get("/api/v1/teacher/total-attempt-in-exams");
-            const activeExamsLength = await axios.get("/api/v1/teacher/active-exams");
-            setActivExams(activeExamsLength.data.data.length)
-            setTotalAttemptInExams(totalAttemptsIn.data.data)
-            setTeacher(response.data.data);
+            // Fetch all required dashboard information together
+            const [
+                teacherResponse,
+                attemptsResponse,
+                activeExamsResponse
+            ] = await Promise.all([
+
+                axios.get("/api/v1/teacher/dashboard"),
+
+                axios.get("/api/v1/teacher/total-attempt-in-exams"),
+
+                axios.get("/api/v1/teacher/active-exams")
+
+            ]);
+
+            setTeacher(teacherResponse.data.data);
+
+            setTotalAttemptInExams(
+                attemptsResponse.data.data || 0
+            );
+
+            setActivExams(
+                activeExamsResponse.data.data?.length || 0
+            );
+
+            setAuthStatus("authenticated");
+
+            return true;
+
         } catch (error) {
+
             console.error("Error fetching teacher data:", error);
-        }
-    };
 
-    const fetchCreatedExams = async () => {
+            if (error.response?.status === 401) {
+
+                setTeacher(null);
+                setAuthStatus("unauthenticated");
+
+                return false;
+            }
+
+            throw error;
+        }
+
+    }, []);
+
+
+    // ---------------- FETCH CREATED EXAMS ----------------
+
+    const fetchCreatedExams = useCallback(async () => {
+
         try {
-            const response = await axios.get("/api/v1/teacher/created-exams");
-            setRecentExams(response.data.data);
+
+            const response = await axios.get(
+                "/api/v1/teacher/created-exams"
+            );
+
+            setRecentExams(response.data.data || []);
+
         } catch (error) {
+
             console.error("Error fetching exam data:", error);
+
+            if (error.response?.status === 401) {
+                setTeacher(null);
+                setAuthStatus("unauthenticated");
+            }
+
+            throw error;
         }
+
+    }, []);
+
+
+    // ---------------- TOTAL ATTEMPTS OF EXAMS ----------------
+
+    const totalAttemptsOfExams = (exams) => {
+
+        return exams.reduce(
+            (total, exam) => total + (Number(exam.totalAttempts) || 0),
+            0
+        );
+
     };
 
-    const totalAttemptsOfExams = (recentExams) => {
-        let total = 0;
-        // console.log("hello" + recentExams?.length)
-        for (let i = 0; i < recentExams?.length; i++) {
-            total = total + recentExams[i]?.totalAttempts;
-        }
-        return total;
-    }
+
+    // ---------------- INITIAL DATA FETCHING ----------------
 
     useEffect(() => {
-        setIsLoading(true)
-        fetchTeachserData();
-        fetchCreatedExams();
-        setIsLoading(false)
-    }, [])
+
+        let isMounted = true;
+
+        const fetchInitialData = async () => {
+
+            try {
+
+                setIsLoading(true);
+
+                setAuthStatus("loading");
+
+                setDashboardError("");
+
+                // First verify teacher authentication
+                const isAuthenticated = await fetchTeachserData();
+
+                if (!isMounted) return;
+
+                // Stop if teacher is not authenticated
+                if (!isAuthenticated) return;
+
+                // Fetch recent exams
+                await fetchCreatedExams();
+
+            } catch (error) {
+
+                console.error("Dashboard loading error:", error);
+
+                if (isMounted) {
+
+                    setDashboardError(
+                        "Unable to load dashboard data. Please try again."
+                    );
+
+                    if (error.response?.status === 401) {
+                        setTeacher(null);
+                        setAuthStatus("unauthenticated");
+                    }
+                }
+
+            } finally {
+
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+
+            }
+        };
+
+        fetchInitialData();
+
+        return () => {
+            isMounted = false;
+        };
+
+    }, [fetchTeachserData, fetchCreatedExams]);
 
 
-    
+    // ---------------- CONDITIONAL RENDERING ----------------
 
-    if (isLoading) {
+    // 1. Loading
+    if (isLoading || authStatus === "loading") {
+
         return (
             <div className="loading-data">
-                <p>Loading........</p>
+                <p>Loading...</p>
             </div>
-        )
+        );
+
     }
 
-    console.log(typeof(teacher))
-    if (!teacher && !isLoading) {
+
+    // 2. Authentication failed
+    if (authStatus === "unauthenticated") {
+
         return <AfterLogout role="teacher" />;
+
     }
+
+
+    // 3. Other API errors
+    if (dashboardError) {
+
+        return (
+            <div className="loading-data">
+
+                <p>{dashboardError}</p>
+
+                <button onClick={() => window.location.reload()}>
+                    Retry
+                </button>
+
+            </div>
+        );
+
+    }
+
+
+    // 4. Your dashboard JSX starts here
+
 
     return (
         <div className="teacher-layout">

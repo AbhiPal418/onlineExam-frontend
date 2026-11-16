@@ -5,32 +5,64 @@ import TeacherSidebar from "../../components/TeacherSidebar";
 import "../../styles/ExamResults.css";
 import axios from "axios";
 import AfterLogout from "../../components/AfterLogout";
+import { useCallback, useEffect, useState } from "react";
 
 function ExamResults() {
+
+
+    // -------------------- STATES --------------------
+
     const [exams, setExams] = useState([]);
     const [selectedExam, setSelectedExam] = useState(null);
     const [results, setResults] = useState([]);
+
     const [search, setSearch] = useState("");
+
     const [teacher, setTeacher] = useState(null);
+
+    // Authentication: loading | authenticated | unauthenticated
+    const [authStatus, setAuthStatus] = useState("loading");
+
     const [isLoading, setIsLoading] = useState(true);
     const [isResultsLoading, setIsResultsLoading] = useState(false);
+
+    const [dashboardError, setDashboardError] = useState("");
 
     const [examSearch, setExamSearch] = useState("");
     const [examSearchResults, setExamSearchResults] = useState([]);
     const [showExamDropdown, setShowExamDropdown] = useState(false);
     const [isExamSearching, setIsExamSearching] = useState(false);
 
-    // Fetch teacher data
-    const fetchTeacherData = async () => {
-        try {
-            const response = await axios.get("/api/v1/teacher/dashboard");
-            setTeacher(response.data.data);
-        } catch (error) {
-            console.error("Error fetching teacher data:", error);
-        }
-    };
 
-    const getAllExams = async () => {
+    // -------------------- FETCH TEACHER DATA --------------------
+
+    const fetchTeacherData = useCallback(async () => {
+        try {
+            const response = await axios.get(
+                "/api/v1/teacher/dashboard"
+            );
+
+            setTeacher(response.data.data);
+            setAuthStatus("authenticated");
+
+            return true;
+
+        } catch (error) {
+
+            if (error.response?.status === 401) {
+                setTeacher(null);
+                setAuthStatus("unauthenticated");
+                return false;
+            }
+
+            throw error;
+        }
+    }, []);
+
+
+    // -------------------- FETCH ALL EXAMS --------------------
+
+    const getAllExams = useCallback(async () => {
         try {
             const response = await axios.get(
                 "/api/v1/teacher/created-exams"
@@ -48,12 +80,75 @@ function ExamResults() {
             );
 
         } catch (error) {
+
             console.error("Error fetching exams:", error);
+
+            if (error.response?.status === 401) {
+                setTeacher(null);
+                setAuthStatus("unauthenticated");
+            }
+
             setExams([]);
             setExamSearchResults([]);
-        }
-    };
+            setSelectedExam(null);
 
+            throw error;
+        }
+    }, []);
+
+
+    // -------------------- INITIAL DATA FETCHING --------------------
+
+    useEffect(() => {
+
+        let isMounted = true;
+
+        const fetchInitialData = async () => {
+
+            try {
+                setIsLoading(true);
+                setAuthStatus("loading");
+                setDashboardError("");
+
+                // First verify teacher authentication
+                const isAuthenticated = await fetchTeacherData();
+
+                if (!isMounted) return;
+
+                // Don't fetch exams if authentication failed
+                if (!isAuthenticated) return;
+
+                // Fetch exams after authentication
+                await getAllExams();
+
+            } catch (error) {
+
+                console.error("Error loading dashboard:", error);
+
+                if (isMounted) {
+                    setDashboardError(
+                        "Unable to load dashboard. Please try again."
+                    );
+                }
+
+            } finally {
+
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        fetchInitialData();
+
+        return () => {
+            isMounted = false;
+        };
+
+    }, [fetchTeacherData, getAllExams]);
+
+
+    // -------------------- SEARCH EXAMS --------------------
 
     useEffect(() => {
 
@@ -61,7 +156,7 @@ function ExamResults() {
 
         const query = examSearch.trim();
 
-        // Show all initially fetched exams when search is empty
+        // Display initially fetched exams
         if (!query) {
             setExamSearchResults(exams);
             setIsExamSearching(false);
@@ -70,23 +165,23 @@ function ExamResults() {
 
         const controller = new AbortController();
 
-        // Debounce API requests
         const timer = setTimeout(async () => {
 
             try {
+
                 setIsExamSearching(true);
 
                 const response = await axios.get(
                     "/api/v1/teacher/search-exams",
                     {
-                        params: {
-                            query: query
-                        },
+                        params: { query },
                         signal: controller.signal
                     }
                 );
 
-                setExamSearchResults(response.data.data || []);
+                setExamSearchResults(
+                    response.data.data || []
+                );
 
             } catch (error) {
 
@@ -100,7 +195,6 @@ function ExamResults() {
                 if (!controller.signal.aborted) {
                     setIsExamSearching(false);
                 }
-
             }
 
         }, 300);
@@ -111,19 +205,9 @@ function ExamResults() {
         };
 
     }, [examSearch, showExamDropdown, exams]);
-    // Fetch results for selected exam
-    const getResultForExam = async (examId) => {
-        try {
-            const response = await axios.get(
-                `/api/v1/teacher/result-for/${examId}`
-            );
-            // console.log("Hello vai")
-            setResults(response.data.data || []);
-        } catch (error) {
-            console.error("Error fetching results:", error);
-            setResults([]);
-        }
-    };
+
+
+    // -------------------- SELECT EXAM --------------------
 
     const handleExamSelect = (exam) => {
 
@@ -132,106 +216,132 @@ function ExamResults() {
         setShowExamDropdown(false);
 
     };
-    // const searchedExams = async () => {
-    //     try {
-    //         setIsLoading(true);
-    //         const response = await axios.get(`/api/v1/teacher/search-exams`, {
-    //             params: {
-    //                 query: search
-    //             }
-    //         })
-    //         setExams(response.data.data)
-    //         setIsLoading(false)
-    //     } catch (error) {
-    //         console.error("Error searching exams ", error)
-    //     }
-    // }
 
-    // Initial data fetching
+
+    // -------------------- FETCH RESULTS FOR SELECTED EXAM --------------------
+
     useEffect(() => {
-        const fetchInitialData = async () => {
-            try {
-                setIsLoading(true);
 
-                await Promise.all([
-                    fetchTeacherData(),
-                    getAllExams()
-                ]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchInitialData();
-    }, []);
-
-
-
-    // Fetch results whenever selected exam changes
-    useEffect(() => {
         if (!selectedExam?._id) {
             setResults([]);
+            setIsResultsLoading(false);
             return;
         }
 
+        const controller = new AbortController();
+
         const fetchResults = async () => {
+
             try {
+
                 setIsResultsLoading(true);
-                // console.log("Hello")
-                await getResultForExam(selectedExam._id);
+
+                // Clear previous exam results immediately
+                setResults([]);
+
+                const response = await axios.get(
+                    `/api/v1/teacher/result-for/${selectedExam._id}`,
+                    {
+                        signal: controller.signal
+                    }
+                );
+
+                setResults(response.data.data || []);
+
+            } catch (error) {
+
+                if (error.code !== "ERR_CANCELED") {
+                    console.error("Error fetching results:", error);
+                    setResults([]);
+                }
+
             } finally {
-                setIsResultsLoading(false);
+
+                if (!controller.signal.aborted) {
+                    setIsResultsLoading(false);
+                }
             }
         };
 
         fetchResults();
+
+        return () => {
+            controller.abort();
+        };
+
     }, [selectedExam?._id]);
 
+
+    // -------------------- EXAM CHANGE --------------------
+
     const handleExamChange = (e) => {
+
         const exam = exams.find(
             (item) => item._id === e.target.value
         );
 
         setSelectedExam(exam || null);
+
     };
-    // console.log(exams)
-    // console.log(results)
-    // Search filtering
+
+
+    // -------------------- FILTER RESULTS --------------------
+
     const filteredResults = results.filter((result) => {
-        const searchValue = search.toLowerCase();
+
+        const searchValue = search.trim().toLowerCase();
 
         return (
-            result.studentName?.toLowerCase().includes(searchValue) ||
-            result.rollNumber?.toLowerCase().includes(searchValue) ||
-            result.email?.toLowerCase().includes(searchValue)
+            result.student?.fullName?.toLowerCase().includes(searchValue) ||
+            result.student?.rollNumber?.toLowerCase().includes(searchValue) ||
+            result.student?.email?.toLowerCase().includes(searchValue)
         );
+
     });
+
+
+    // -------------------- CALCULATE STATISTICS --------------------
+
+    const getPercentage = (result) => {
+
+        const score = Number(result.scoreObtained) || 0;
+        const total = Number(result.totalScore) || 0;
+
+        return total > 0
+            ? Math.round((score / total) * 100)
+            : 0;
+
+    };
+
 
     // Average score
     const averageScore = results.length > 0
         ? (
             results.reduce(
-                (total, result) => total + Math.round((result.scoreObtained / result.totalScore) * 100),
+                (total, result) => total + getPercentage(result),
                 0
             ) / results.length
         ).toFixed(1)
-        : 0;
+        : "0.0";
+
 
     // Highest score
-
     const highestScore = results.length > 0
-        ? Math.max(...results.map((result) => Math.round((result.scoreObtained / result.totalScore) * 100)))
+        ? Math.max(...results.map(getPercentage))
         : 0;
+
 
     // Passed students
     const passedStudents = results.filter(
-        (result) => Math.round((result.scoreObtained / result.totalScore) * 100) >= 40
+        (result) => getPercentage(result) >= 40
     ).length;
 
-    // Download results as CSV
+
+    // -------------------- DOWNLOAD RESULTS CSV --------------------
 
     const handleDownloadResults = () => {
-        if (!selectedExam || !results || results.length === 0) {
+
+        if (!selectedExam || results.length === 0) {
             alert("No results available to download.");
             return;
         }
@@ -246,13 +356,13 @@ function ExamResults() {
             "Submitted At"
         ];
 
-        // Safely format individual CSV cells
+        // Safely format CSV cells
         const formatCSVCell = (value) => {
+
             let str = String(value ?? "");
 
-            // Prevent CSV formula injection in untrusted text
-            if (typeof value === "string" &&
-                (/^[\t\r\n=+\-@]/.test(str) || /^\s*[=+\-@]/.test(str))) {
+            // Prevent CSV formula injection
+            if (/^[\s]*[=+\-@\t\r]/.test(str)) {
                 str = "'" + str;
             }
 
@@ -260,8 +370,9 @@ function ExamResults() {
             return `"${str.replace(/"/g, '""')}"`;
         };
 
-        // Convert results into CSV rows
+
         const rows = results.map((result) => {
+
             const score = Number(result.scoreObtained) || 0;
             const total = Number(result.totalScore) || 0;
 
@@ -280,57 +391,88 @@ function ExamResults() {
                     ? new Date(result.createdAt).toLocaleString("en-IN")
                     : ""
             ];
+
         });
 
-        // Generate CSV content
+
         const csvContent = [
             headers,
             ...rows
         ]
-            .map(row => row.map(formatCSVCell).join(","))
+            .map((row) => row.map(formatCSVCell).join(","))
             .join("\r\n");
 
-        // Add UTF-8 BOM for better Excel compatibility
+
+        // UTF-8 BOM for Excel compatibility
         const blob = new Blob(
             ["\uFEFF" + csvContent],
             { type: "text/csv;charset=utf-8;" }
         );
 
-        // Generate temporary URL
         const url = URL.createObjectURL(blob);
 
-        // Create download link
         const link = document.createElement("a");
+
         link.href = url;
 
-        const safeTitle = selectedExam.title.replace(
-            /[<>:"/\\|?*]/g, "_"
-        );
+        const safeTitle = selectedExam.title
+            .replace(/[<>:"/\\|?*]/g, "_");
 
         link.download = `${safeTitle}-results.csv`;
 
         document.body.appendChild(link);
+
         link.click();
+
         link.remove();
 
-        // Release URL after the browser has initiated the download
         setTimeout(() => {
             URL.revokeObjectURL(url);
         }, 1000);
+
     };
 
-    // console.log(filteredResults)
 
-    if (isLoading) {
+    // -------------------- CONDITIONAL RENDERING --------------------
+
+    // 1. Initial loading
+    if (isLoading || authStatus === "loading") {
+
         return (
             <div className="loading-data">
-                <p>Loading......</p>
+                <p>Loading...</p>
             </div>
         );
+
     }
-    if (!teacher && !isLoading) {
+
+
+    // 2. Not authenticated
+    if (authStatus === "unauthenticated") {
+
         return <AfterLogout role="teacher" />;
+
     }
+
+
+    // 3. Dashboard loading error
+    if (dashboardError) {
+
+        return (
+            <div className="loading-data">
+                <p>{dashboardError}</p>
+
+                <button onClick={() => window.location.reload()}>
+                    Retry
+                </button>
+            </div>
+        );
+
+    }
+
+
+    // 4. Render your normal teacher dashboard below
+
 
     return (
         <div className="teacher-page">

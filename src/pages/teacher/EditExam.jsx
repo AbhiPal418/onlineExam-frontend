@@ -7,75 +7,23 @@ import AfterLogout from "../../components/AfterLogout";
 
 
 function EditExam() {
+
     const { examId } = useParams();
-    const [isLoading, setIsLoading] = useState(false);
-    const [teacher, setTeacher] = useState({});
+    const navigate = useNavigate();
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const [teacher, setTeacher] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
     const [isNegativeMarkings, setIsNegativeMarkings] = useState(true);
-    const navigate = useNavigate()
-    const [exam, setExam] = useState({});
+
+    const [exam, setExam] = useState(null);
     const [error, setError] = useState("");
 
-    const fetchTeacherData = async () => {
-
-        try {
-
-            const response = await axios.get(`/api/v1/teacher/dashboard`);
-            setTeacher(response.data.data);
-        } catch (error) {
-            console.error("Error while fetching Data  ",error)
-        }
-    }
-
-    const fetchExam = async () => {
-        try {
-            const response = await axios.get(
-                `/api/v1/teacher/get-exam/${examId}`
-            );
-
-            const exam = response.data.data;
-
-            setExam(exam);
-
-            setExamData({
-                _id:exam?._id,
-                title: exam.title || "",
-                description: exam.description || "",
-                timeLimit: exam.timeLimit || 30,
-                totalScore: exam.totalScore || 0,
-                password: "",
-                questionMarks: exam.questionMarks ?? 4,
-                negativeMarks: exam.negativeMarks ?? 0,
-            });
-
-            setIsNegativeMarkings(
-                exam.negativeMarks > 1
-            );
-
-            setQuestions(
-                exam.questions.map((question, index) => ({
-                    ...question,
-                    id: question._id || Date.now() + index,
-                    options: [...question.options],
-                }))
-            );
-
-        } catch (error) {
-            console.error("Error fetching exam:", error);
-            setError(
-                error.response?.data?.message || "Failed to load exam."
-            );
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchTeacherData();
-        fetchExam();
-    }, [examId])
-
     const [examData, setExamData] = useState({
-        _id:"",
+        _id: "",
         title: "",
         description: "",
         timeLimit: 30,
@@ -90,10 +38,102 @@ function EditExam() {
             id: 1,
             question: "",
             options: ["", "", "", ""],
-            correctAnswer:null,
+            correctAnswer: null,
         },
     ]);
 
+
+    // Fetch teacher data
+    const fetchTeacherData = async () => {
+        try {
+            const response = await axios.get(
+                "/api/v1/teacher/dashboard"
+            );
+
+            setTeacher(response.data.data);
+            setIsAuthenticated(true);
+
+        } catch (error) {
+            console.error("Error fetching teacher:", error);
+
+            if (error.response?.status === 401) {
+                setIsAuthenticated(false);
+            } else {
+                throw error;
+            }
+        }
+    };
+
+
+    // Fetch exam details
+    const fetchExam = async () => {
+        const response = await axios.get(
+            `/api/v1/teacher/get-exam/${examId}`
+        );
+
+        const examDataResponse = response.data.data;
+
+        setExam(examDataResponse);
+
+        setExamData({
+            _id: examDataResponse._id,
+            title: examDataResponse.title || "",
+            description: examDataResponse.description || "",
+            timeLimit: examDataResponse.timeLimit ?? 30,
+            totalScore: examDataResponse.totalScore ?? 0,
+            password: "",
+            questionMarks: examDataResponse.questionMarks ?? 4,
+            negativeMarks: examDataResponse.negativeMarks ?? 0,
+        });
+
+        setIsNegativeMarkings(
+            (examDataResponse.negativeMarks ?? 0) > 0
+        );
+
+        setQuestions(
+            (examDataResponse.questions || []).map(
+                (question, index) => ({
+                    ...question,
+                    id: question._id || `question-${index}`,
+                    options: [...(question.options || [])],
+                })
+            )
+        );
+    };
+
+
+    // Fetch everything on mount
+    useEffect(() => {
+
+        const loadData = async () => {
+            try {
+                setIsLoading(true);
+                setError("");
+
+                await Promise.all([
+                    fetchTeacherData(),
+                    fetchExam(),
+                ]);
+
+            } catch (error) {
+                console.error("Error loading edit exam page:", error);
+
+                setError(
+                    error.response?.data?.message ||
+                    "Unable to load exam details."
+                );
+
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadData();
+
+    }, [examId]);
+
+
+    // Handle exam input changes
     const handleExamChange = (e) => {
         const { name, value } = e.target;
 
@@ -103,14 +143,20 @@ function EditExam() {
         }));
     };
 
+
+    // Handle question changes
     const handleQuestionChange = (questionId, value) => {
         setQuestions((prev) =>
             prev.map((question) =>
-                question.id === questionId ? { ...question, question: value, } : question
+                question.id === questionId
+                    ? { ...question, question: value }
+                    : question
             )
         );
     };
 
+
+    // Handle negative marking
     const handleNegativeMarking = (value) => {
         setIsNegativeMarkings(value);
 
@@ -122,6 +168,8 @@ function EditExam() {
         }
     };
 
+
+    // Handle option changes
     const handleOptionChange = (questionId, optionIndex, value) => {
         setQuestions((prev) =>
             prev.map((question) =>
@@ -138,6 +186,8 @@ function EditExam() {
         );
     };
 
+
+    // Handle correct answer
     const handleCorrectAnswer = (questionId, optionIndex) => {
         setQuestions((prev) =>
             prev.map((question) =>
@@ -151,6 +201,8 @@ function EditExam() {
         );
     };
 
+
+    // Add question
     const addQuestion = () => {
         setQuestions((prev) => [
             ...prev,
@@ -158,42 +210,56 @@ function EditExam() {
                 id: Date.now(),
                 question: "",
                 options: ["", "", "", ""],
-                correctAnswer: "",
+                correctAnswer: null,
             },
         ]);
     };
 
-    const removeQuestion = (questionId) => {
-        if (questions.length === 1) {
-            return;
-        }
 
-        setQuestions((prev) =>
-            prev.filter(
+    // Remove question
+    const removeQuestion = (questionId) => {
+        setQuestions((prev) => {
+            if (prev.length === 1) {
+                return prev;
+            }
+
+            return prev.filter(
                 (question) => question.id !== questionId
-            )
-        );
+            );
+        });
     };
 
+
+    // Update exam
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        setError("");
+
         try {
-            const Edata = {
-                examData: {
-                    ...examData,
-                    negativeMarkings: isNegativeMarkings,
-                    createdBy: teacher._id,
-                },
-                questions: questions,
+            setIsSaving(true);
+
+            const updatedExamData = {
+                ...examData,
+                negativeMarkings: isNegativeMarkings,
+                negativeMarks: isNegativeMarkings
+                    ? Number(examData.negativeMarks)
+                    : 0,
+                timeLimit: Number(examData.timeLimit),
+                questionMarks: Number(examData.questionMarks),
             };
 
-            // If password is empty, don't change the existing password
-            if (!examData.password) {
-                delete Edata.examData.password;
+            // Don't overwrite existing password if no new password is provided
+            if (!examData.password.trim()) {
+                delete updatedExamData.password;
             }
 
-            const response = await axios.post(
+            const Edata = {
+                examData: updatedExamData,
+                questions,
+            };
+
+            await axios.post(
                 `/api/v1/teacher/edit-exam/${examId}`,
                 Edata
             );
@@ -201,20 +267,50 @@ function EditExam() {
             navigate(`/teacher/${teacher.username}/my-exams`);
 
         } catch (error) {
+            console.error("Exam update error:", error);
+
             setError(
-                error.response?.data?.message || "Failed to update exam."
+                error.response?.data?.message ||
+                "Failed to update exam."
             );
+
+        } finally {
+            setIsSaving(false);
         }
     };
 
-    // console.log(error)
+
+    // Loading screen
     if (isLoading) {
-        return <div className="loading">Loading exam details...</div>;
+        return (
+            <div className="loading">
+                Loading exam details...
+            </div>
+        );
     }
 
-    if (!teacher.username && !isLoading) {
+
+    // Authentication check
+    if (!isAuthenticated) {
         return <AfterLogout role="teacher" />;
     }
+
+
+    // Exam loading error
+    if (error && !exam) {
+        return (
+            <div className="error-container">
+                <p>{error}</p>
+                <button onClick={() => navigate(-1)}>
+                    Go Back
+                </button>
+            </div>
+        );
+    }
+
+
+    // Your edit exam JSX below
+
     return (
         <div className="create-exam-layout">
             <TeacherSidebar />
