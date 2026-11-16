@@ -7,49 +7,63 @@ import AfterLogout from "../../components/AfterLogout";
 
 
 const StudentProfile = () => {
-    
+
 
     const navigate = useNavigate();
+
     const [student, setStudent] = useState({});
     const [email, setEmail] = useState("");
     const [rollNumber, setRoleNumber] = useState("");
-    const [isLoading,setIsLoading]  = useState(false)
-
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const fetchStudentData = async () => {
         try {
-            setIsLoading(true)
             const response = await axios.get("/api/v1/student/dashboard");
-            setStudent(response.data.data);
-            setEmail(response.data.data.email)
-            setRoleNumber(response.data.data.rollNumber)
-            setIsLoading(false)
+
+            const studentData = response.data.data;
+
+            setStudent(studentData);
+            setEmail(studentData.email);
+            setRoleNumber(studentData.rollNumber);
+
+            setIsAuthenticated(true);
+
         } catch (error) {
             console.error("Error fetching student data:", error);
+
+            if (error.response?.status === 401) {
+                setIsAuthenticated(false);
+            }
+
+        } finally {
+            setIsLoading(false);
         }
     };
 
-
     useEffect(() => {
-        setIsLoading(true);
         fetchStudentData();
-        setIsLoading(false);
     }, []);
 
-    const handleEditProfile = async()=>{
-        navigate(`/student/${student.username}/edit-profile`)
-    }
+    const handleEditProfile = () => {
+        navigate(`/student/${student.username}/edit-profile`);
+    };
 
-    if(isLoading){
-        return(
+    // Loading state
+    if (isLoading) {
+        return (
             <div className="loading-data">
                 <p>Loading.......</p>
             </div>
-        )
+        );
     }
-    if (!student.username && !isLoading) {
+
+    // Authentication state
+    if (!isAuthenticated) {
         return <AfterLogout role="student" />;
     }
+
+    // Your profile JSX below
 
 
     return (
@@ -79,7 +93,7 @@ const StudentProfile = () => {
                         </span>
                     </div>
 
-                    <button className="edit-profile-btn" onClick={()=>handleEditProfile()}>
+                    <button className="edit-profile-btn" onClick={() => handleEditProfile()}>
                         Edit Profile
                     </button>
                 </section>

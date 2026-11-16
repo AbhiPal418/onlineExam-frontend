@@ -10,6 +10,7 @@ import "../../styles/EditStudentProfile.css";
 
 function EditStudentProfile() {
 
+
     const navigate = useNavigate();
 
     const [student, setStudent] = useState({});
@@ -29,9 +30,7 @@ function EditStudentProfile() {
 
     // Fetch current student information
     const fetchStudentData = async () => {
-
         try {
-
             const response = await axios.get(
                 "/api/v1/student/dashboard"
             );
@@ -48,7 +47,6 @@ function EditStudentProfile() {
             setIsAuthenticated(true);
 
         } catch (error) {
-
             console.error("Error fetching student:", error);
 
             if (error.response?.status === 401) {
@@ -58,11 +56,8 @@ function EditStudentProfile() {
             }
 
         } finally {
-
             setIsLoading(false);
-
         }
-
     };
 
 
@@ -73,7 +68,6 @@ function EditStudentProfile() {
 
     // Handle input changes
     const handleChange = (e) => {
-
         const { name, value } = e.target;
 
         setFormData((prev) => ({
@@ -83,13 +77,11 @@ function EditStudentProfile() {
 
         setError("");
         setSuccess("");
-
     };
 
 
     // Handle profile update
     const handleSubmit = async (e) => {
-
         e.preventDefault();
 
         setError("");
@@ -103,6 +95,7 @@ function EditStudentProfile() {
             return;
         }
 
+        // Email validation
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             setError("Please enter a valid email address.");
             return;
@@ -114,7 +107,6 @@ function EditStudentProfile() {
         }
 
         try {
-
             setIsSaving(true);
 
             const response = await axios.post(
@@ -128,40 +120,37 @@ function EditStudentProfile() {
                 }
             );
 
-            if (response.data.success) {
-
-                const updatedStudent = response.data.data;
-
-                setStudent(updatedStudent);
-
-                setFormData({
-                    fullName: updatedStudent.fullName,
-                    email: updatedStudent.email
-                });
-
-                setSuccess("Your profile has been updated successfully.");
-
+            if (!response.data.success) {
+                throw new Error("Profile update failed.");
             }
-            navigate(`/student/${response.data.data.username}/profile`)
+
+            const updatedStudent = response.data.data;
+
+            setStudent(updatedStudent);
+
+            setFormData({
+                fullName: updatedStudent.fullName,
+                email: updatedStudent.email
+            });
+
+            setSuccess("Your profile has been updated successfully.");
+
+            navigate(`/student/${updatedStudent.username}/profile`);
 
         } catch (error) {
-
             console.error("Profile update error:", error);
 
             setError(
                 error.response?.data?.message ||
+                error.message ||
                 "Unable to update your profile. Please try again."
             );
 
         } finally {
-
             setIsSaving(false);
-
         }
-
     };
 
-   
 
     // Loading screen
     if (isLoading) {
@@ -174,9 +163,12 @@ function EditStudentProfile() {
 
 
     // Authentication check
-    if (!isAuthenticated && !isLoading) {
+    if (!isAuthenticated) {
         return <AfterLogout role="student" />;
     }
+
+
+    // Your edit profile JSX below
 
 
     return (

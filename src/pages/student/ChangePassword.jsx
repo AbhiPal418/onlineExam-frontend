@@ -6,26 +6,15 @@ import axios from "axios";
 import AfterLogout from "../../components/AfterLogout";
 
 const ChangePassword = () => {
+
     const navigate = useNavigate();
-    // const[username,setusername] = useState("");
-    // let username;
-    // username = useParams().username;
-    // console.log(username)
 
-    const [username,setUsername] = useState("");
-    const [isLoading,setIsLoading] = useState(false);
+    const [username, setUsername] = useState("");
 
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const fetchUsername = async()=>{
-        try {
-            setIsLoading(true);
-            const response = await axios.get(`/api/v1/student/dashboard`);
-            setUsername(response.data.data.username);
-            setIsLoading(false); 
-        } catch (error) {
-            console.error("Error fetching user name ",error)
-        }
-    }
     const [passwordData, setPasswordData] = useState({
         currentPassword: "",
         newPassword: "",
@@ -40,6 +29,33 @@ const ChangePassword = () => {
 
     const [error, setError] = useState("");
 
+
+    // Fetch username
+    const fetchUsername = async () => {
+        try {
+            const response = await axios.get(
+                "/api/v1/student/dashboard"
+            );
+
+            setUsername(response.data.data.username);
+            setIsAuthenticated(true);
+
+        } catch (error) {
+            console.error("Error fetching username:", error);
+
+            if (error.response?.status === 401) {
+                setIsAuthenticated(false);
+            } else {
+                setError("Unable to load student information.");
+            }
+
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+    // Handle input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -51,6 +67,8 @@ const ChangePassword = () => {
         setError("");
     };
 
+
+    // Toggle password visibility
     const togglePassword = (field) => {
         setShowPassword((prev) => ({
             ...prev,
@@ -58,8 +76,12 @@ const ChangePassword = () => {
         }));
     };
 
+
+    // Handle password change
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        setError("");
 
         const {
             currentPassword,
@@ -89,40 +111,60 @@ const ChangePassword = () => {
             return;
         }
 
-        const response = await axios.patch("/api/v1/student/change-password", {
-          currentPassword,
-          newPassword
-        });
+        try {
+            setIsSaving(true);
 
-        // console.log({
-        //     currentPassword,
-        //     newPassword,
-        // });
+            const response = await axios.patch(
+                "/api/v1/student/change-password",
+                {
+                    currentPassword,
+                    newPassword,
+                }
+            );
 
-      
-        alert("Password changed successfully!");
+            if (response.data.success) {
+                alert("Password changed successfully!");
 
-        navigate(`/student/${username}/profile`);
+                navigate(`/student/${username}/profile`);
+            }
+
+        } catch (error) {
+            console.error("Password change error:", error);
+
+            setError(
+                error.response?.data?.message ||
+                "Unable to change password. Please try again."
+            );
+
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    useEffect(()=>{
-        setIsLoading(true);
+
+    // Fetch student information on mount
+    useEffect(() => {
         fetchUsername();
-        setIsLoading(false);
-    },[]);
+    }, []);
 
 
-    if(isLoading){
+    // Loading screen
+    if (isLoading) {
         return (
             <div className="loading">
                 <p>Loading.......</p>
             </div>
-        )
+        );
     }
 
-    if(!username && !isLoading){
-        return <AfterLogout role = "student"/> 
+
+    // Authentication check
+    if (!isAuthenticated) {
+        return <AfterLogout role="student" />;
     }
+
+
+    // Your change password JSX below
 
 
     return (

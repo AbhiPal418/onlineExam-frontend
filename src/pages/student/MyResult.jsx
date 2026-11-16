@@ -8,13 +8,17 @@ import AfterLogout from "../../components/AfterLogout";
 
 function MyResults() {
 
+
     const navigate = useNavigate();
 
     const [results, setResults] = useState([]);
     const [user, setUser] = useState({});
     const [search, setSearch] = useState("");
+
     const [loading, setLoading] = useState(true);
     const [userLoading, setUserLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
 
     // Fetch student information
     const fetchStudentData = async () => {
@@ -24,17 +28,20 @@ function MyResults() {
             );
 
             setUser(response.data.data);
+            setIsAuthenticated(true);
 
         } catch (error) {
             console.error("Error fetching student data:", error);
 
             if (error.response?.status === 401) {
-                setUser(null);
+                setIsAuthenticated(false);
             }
+
         } finally {
             setUserLoading(false);
         }
     };
+
 
     // Fetch all exam results
     const getAllResults = async () => {
@@ -49,10 +56,12 @@ function MyResults() {
 
         } catch (error) {
             console.error("Error fetching results:", error);
+
         } finally {
             setLoading(false);
         }
     };
+
 
     // Search exam results
     const searchExamsResult = async () => {
@@ -72,17 +81,18 @@ function MyResults() {
 
         } catch (error) {
             console.error("Error searching results:", error);
+
         } finally {
             setLoading(false);
         }
     };
 
+
     // Fetch student information on component mount
     useEffect(() => {
-        setUserLoading(true)
         fetchStudentData();
-        setUserLoading(false)
     }, []);
+
 
     // Debounced search
     useEffect(() => {
@@ -95,13 +105,14 @@ function MyResults() {
                 searchExamsResult();
             }
 
-        }, 100);
+        }, 300);
 
         return () => clearTimeout(delay);
 
     }, [search]);
 
-    // Handle logged-out student
+
+    // Loading state
     if (userLoading) {
         return (
             <div className="loading-data">
@@ -110,9 +121,14 @@ function MyResults() {
         );
     }
 
-    if (!user.username && !userLoading) {
+
+    // Authentication state
+    if (!isAuthenticated) {
         return <AfterLogout role="student" />;
     }
+
+
+    // Your results page JSX below
 
     return (
         <div className="results-layout">
@@ -228,7 +244,7 @@ function MyResults() {
                                                 </td>
 
                                                 <td>
-                                                    
+
                                                     {result.exam.createdBy?.fullName}
                                                 </td>
                                                 <td>

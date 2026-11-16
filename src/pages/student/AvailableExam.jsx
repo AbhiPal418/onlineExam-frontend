@@ -9,91 +9,137 @@ import AfterLogout from "../../components/AfterLogout";
 
 function AvailableExams() {
 
+
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
+
+    const [loading, setLoading] = useState(true);
     const [exams, setExams] = useState([]);
     const [user, setUser] = useState({});
     const [search, setSearch] = useState("");
-    const [userLoading, setUserLoading] = useState(true)
-    
-    const username = user.username
+
+    const [userLoading, setUserLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    const username = user.username;
 
 
-    const searchExamsA = async () => {
-        try {
-            setLoading(true)
-            const response = await axios.get("/api/v1/student/search-exams", {
-                params: {
-                    query: search
-                }
-            });
-            // console.log(response)
-            setExams(response.data.data);
-            setLoading(false)
-        } catch (error) {
-            console.error("Error searching exams:", error);
-        }
-    };
-
+    // Fetch student information
     const fetchStudentData = async () => {
         try {
-            const response = await axios.get("/api/v1/student/dashboard");
+            const response = await axios.get(
+                "/api/v1/student/dashboard"
+            );
+
             setUser(response.data.data);
+            setIsAuthenticated(true);
+
         } catch (error) {
-            console.error(error);
+            console.error("Error fetching student data:", error);
+
+            if (error.response?.status === 401) {
+                setIsAuthenticated(false);
+            }
+
         } finally {
             setUserLoading(false);
         }
     };
 
+
+    // Fetch all exams
     const getAllExams = async () => {
         try {
             setLoading(true);
 
-            const response = await axios.get("/api/v1/student/all-exams");
+            const response = await axios.get(
+                "/api/v1/student/all-exams"
+            );
 
-            setExams(response.data.data);
+            setExams(response.data.data || []);
 
         } catch (error) {
             console.error("Error fetching exams:", error);
+
         } finally {
             setLoading(false);
         }
     };
 
 
+    // Search exams
+    const searchExamsA = async () => {
+        try {
+            setLoading(true);
+
+            const response = await axios.get(
+                "/api/v1/student/search-exams",
+                {
+                    params: {
+                        query: search.trim()
+                    }
+                }
+            );
+
+            setExams(response.data.data || []);
+
+        } catch (error) {
+            console.error("Error searching exams:", error);
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    // Fetch student information on mount
     useEffect(() => {
         fetchStudentData();
-    }, [])
+    }, []);
 
+
+    // Search and fetch exams only after authentication
     useEffect(() => {
+
+        // Wait until authentication check finishes
+        if (userLoading) return;
+
+        // Don't fetch exams if student is not authenticated
+        if (!isAuthenticated) return;
+
         const delay = setTimeout(() => {
+
             if (search.trim() === "") {
                 getAllExams();
             } else {
                 searchExamsA();
             }
+
         }, 400);
 
         return () => clearTimeout(delay);
-    }, [search]);
 
-    
+    }, [search, userLoading, isAuthenticated]);
+
+
+    // Handle starting an exam
     const handleStartExam = (examId, exam) => {
-        // console.log(username)
-        // console.log(exam)
-        navigate(`/student/${user.username}/attend-exam/${examId}`, {
+
+        navigate(`/student/${username}/attend-exam/${examId}`, {
             state: {
                 exam: exam,
                 student: username
             }
-        }
-        );
+        });
+
     };
 
 
+    // Sidebar responsiveness
     useEffect(() => {
-        const mediaQuery = window.matchMedia("(max-width: 768px)");
+
+        const mediaQuery = window.matchMedia(
+            "(max-width: 768px)"
+        );
 
         const handleResize = (event) => {
             if (!event.matches) {
@@ -106,16 +152,24 @@ function AvailableExams() {
         return () => {
             mediaQuery.removeEventListener("change", handleResize);
         };
+
     }, []);
 
+
+    // Loading screen
     if (userLoading) {
         return <div className="loader">Loading...</div>;
     }
 
-    if (!user.username && !userLoading) {
+
+    // Authentication check
+    if (!isAuthenticated) {
         return <AfterLogout role="student" />;
     }
-    
+
+
+    // Your dashboard JSX below
+
     return (
         <div className="available-layout">
 
