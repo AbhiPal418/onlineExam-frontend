@@ -47,7 +47,7 @@ const StudentProfile = () => {
             </div>
         )
     }
-    if (!student && !isLoading) {
+    if (!student.username && !isLoading) {
         return <AfterLogout role="student" />;
     }
 

@@ -110,7 +110,7 @@ function MyResults() {
         );
     }
 
-    if (!user && !userLoading) {
+    if (!user.username && !userLoading) {
         return <AfterLogout role="student" />;
     }
 
