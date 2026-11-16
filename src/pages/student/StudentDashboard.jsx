@@ -24,8 +24,8 @@ function StudentDashboard() {
     const fetchStudentData = async () => {
         try {
 
-            const response = await axios.get("https://online-exam-backend-delta.vercel.app/api/v1/student/dashboard");
-            const attempted = await axios.get("https://online-exam-backend-delta.vercel.app/api/v1/student/attempted-exams");
+            const response = await axios.get("/api/v1/student/dashboard");
+            const attempted = await axios.get("/api/v1/student/attempted-exams");
             setAttemptedExams(attempted.data.data);
             setUser(response.data.data);
             setIsAuthenticated(true);
@@ -41,7 +41,7 @@ function StudentDashboard() {
 
     const getAllExams = async () => {
         try {
-            const response = await axios.get("https://online-exam-backend-delta.vercel.app/api/v1/student/all-exams");
+            const response = await axios.get("/api/v1/student/all-exams");
             setExams(response.data.data);
         } catch (error) {
             console.error("Error fetching all exams:", error);
@@ -59,9 +59,10 @@ function StudentDashboard() {
     };
 
     useEffect(() => {
-
+        setIsLoading(true)
         fetchStudentData();
         getAllExams();
+        setIsLoading(false)
 
     }, []);
 
