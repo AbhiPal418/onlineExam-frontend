@@ -79,7 +79,9 @@ function MyResults() {
 
     // Fetch student information on component mount
     useEffect(() => {
+        setUserLoading(true)
         fetchStudentData();
+        setUserLoading(false)
     }, []);
 
     // Debounced search

@@ -41,8 +41,10 @@ function StudentDashboard() {
 
     const getAllExams = async () => {
         try {
+            setIsLoading(true)
             const response = await axios.get("/api/v1/student/all-exams");
             setExams(response.data.data);
+            setIsLoading(false)
         } catch (error) {
             console.error("Error fetching all exams:", error);
         }
@@ -70,7 +72,7 @@ function StudentDashboard() {
         return <div>Loading dashboard...</div>;
     }
 
-    if (!isAuthenticated && !isLoading) {
+    if (!isAuthenticated ) {
         return <AfterLogout role="student" />;
     }
 

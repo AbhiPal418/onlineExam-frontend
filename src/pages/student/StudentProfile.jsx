@@ -10,7 +10,7 @@ const StudentProfile = () => {
     
 
     const navigate = useNavigate();
-    const [student, setStudent] = useState(null);
+    const [student, setStudent] = useState({});
     const [email, setEmail] = useState("");
     const [rollNumber, setRoleNumber] = useState("");
     const [isLoading,setIsLoading]  = useState(false)
@@ -18,10 +18,12 @@ const StudentProfile = () => {
 
     const fetchStudentData = async () => {
         try {
+            setIsLoading(true)
             const response = await axios.get("/api/v1/student/dashboard");
             setStudent(response.data.data);
             setEmail(response.data.data.email)
             setRoleNumber(response.data.data.rollNumber)
+            setIsLoading(false)
         } catch (error) {
             console.error("Error fetching student data:", error);
         }
