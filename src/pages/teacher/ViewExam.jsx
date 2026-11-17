@@ -256,7 +256,6 @@ function ViewExam() {
             <main className="teacher-main view-exam-main">
 
 
-                {/* Page Header */}
                 <div className="view-exam-header">
                     <div className="">
                         <button

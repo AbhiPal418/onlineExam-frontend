@@ -14,7 +14,7 @@ function Register() {
     const [error, setError] = useState("");
 
 
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -159,7 +159,8 @@ function Register() {
                                             <p className="password-error">
                                                 {error}
                                             </p>
-                                        )}
+                                        )
+                                        }
                                     </div>
 
                                 </div> : <div>
@@ -181,7 +182,7 @@ function Register() {
                                         <label>Roll Number</label>
                                         <input
                                             type="text"
-                                            p laceholder="Enter your roll number"
+                                            placeholder="Enter your roll number"
                                             onChange={(e) => {
                                                 setRollNumber(e.target.value)
                                                 setError("")
