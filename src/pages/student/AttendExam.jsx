@@ -21,7 +21,7 @@ function AttendExam() {
 
     // Exam data passed from Available Exams page
     const exam = location.state?.exam;
-
+    const [isLoading,setIsLoading] = useState(false);
     // Use URL username as fallback
     // const student = location.state?.student || username;
     const [student,setStudent]= useState(undefined);
@@ -43,7 +43,6 @@ function AttendExam() {
     // Component states
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
 
     if(isLoading){
         return(
