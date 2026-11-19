@@ -14,50 +14,74 @@ import "../../styles/AttendExam.css";
 
 function AttendExam() {
 
+
     const navigate = useNavigate();
     const location = useLocation();
 
     const { examId, username } = useParams();
 
-    // Exam data passed from Available Exams page
     const exam = location.state?.exam;
-    const [isLoading,setIsLoading] = useState(false);
-    // Use URL username as fallback
-    // const student = location.state?.student || username;
-    const [student,setStudent]= useState({});
-    const fetchUsername = async()=>{
-        try {
-            setIsLoading(true);
-            const response = await axios.get(`/api/v1/student/dashboard`)
-            setStudent(response.data.data)
-            setIsLoading(false)
-        } catch (error) {
-            console.error("Error fetching user name ",error)
-        }
-    }
-    
-    useEffect(()=>{
-        fetchUsername();
-    },[])
 
-    // Component states
+    const [student, setStudent] = useState(null);
+
+    const [isFetchingStudent, setIsFetchingStudent] = useState(true);
+    const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
-    if(isLoading){
-        return(
+    // Fetch logged-in student
+    useEffect(() => {
+
+        const fetchUsername = async () => {
+
+            try {
+
+                const response = await axios.get(
+                    `/api/v1/student/dashboard`,
+                    { withCredentials: true }
+                );
+
+                setStudent(response.data.data);
+
+            } catch (error) {
+
+                console.error("Error fetching user:", error);
+
+                if (
+                    error.response?.status === 401 ||
+                    error.response?.status === 403
+                ) {
+                    setStudent(null);
+                }
+
+            } finally {
+                setIsFetchingStudent(false);
+            }
+        };
+
+        fetchUsername();
+
+    }, []);
+
+
+    // Loading student information
+    if (isFetchingStudent) {
+        return (
             <div className="loading-data">
-                <p>Loading.....</p>
+                <p>Loading...</p>
             </div>
-        )
+        );
     }
-    // If user information is unavailable
-    if (!student && !isLoading) {
+
+
+    // Check authentication
+    if (!student) {
         return <AfterLogout role="student" />;
     }
 
 
-    // If exam information is unavailable
+    // Check exam information
     if (!exam) {
         return (
             <div className="deactivated-exam">
@@ -84,15 +108,11 @@ function AttendExam() {
     }
 
 
-    // Check whether the exam is deactivated
+    // Check exam status
     if (exam.status === "Deactivated") {
-
         return (
             <div className="deactivated-exam">
-
                 <div className="deactivated-card">
-
-                    
 
                     <h2>Exam Unavailable</h2>
 
@@ -114,22 +134,20 @@ function AttendExam() {
                     </span>
 
                 </div>
-
             </div>
         );
     }
 
 
-    // Handle exam password verification
+    // Verify exam password
     const handleSubmit = async (e) => {
 
         e.preventDefault();
 
-        if (isLoading) return;
+        if (isVerifyingPassword) return;
 
         setError("");
 
-        // Validate password
         if (!password.trim()) {
             setError("Please enter the exam password.");
             return;
@@ -137,7 +155,7 @@ function AttendExam() {
 
         try {
 
-            setIsLoading(true);
+            setIsVerifyingPassword(true);
 
             const response = await axios.post(
                 `/api/v1/student/attend-exam/${examId}`,
@@ -148,7 +166,6 @@ function AttendExam() {
                     withCredentials: true
                 }
             );
-
 
             if (response.data.success) {
 
@@ -174,11 +191,8 @@ function AttendExam() {
             );
 
         } finally {
-
-            setIsLoading(false);
-
+            setIsVerifyingPassword(false);
         }
-
     };
 
 
@@ -243,7 +257,7 @@ function AttendExam() {
                                         setPassword(e.target.value);
                                         setError("");
                                     }}
-                                    disabled={isLoading}
+                                    disabled={isVerifyingPassword}
                                     autoComplete="off"
                                     required
                                 />
@@ -262,15 +276,16 @@ function AttendExam() {
 
                             <button
                                 type="submit"
-                                className="verify-exam-btn"
-                                disabled={isLoading}
+                                disabled={isVerifyingPassword}
                             >
-
-                                {isLoading
-                                    ? "Verifying Password..."
-                                    : "Verify & Start Exam →"
-                                }
-
+                                {isVerifyingPassword ? (
+                                    <>
+                                        <span className="loader"></span>
+                                        Verifying...
+                                    </>
+                                ) : (
+                                    "Start Examination"
+                                )}
                             </button>
 
                         </form>
@@ -282,9 +297,9 @@ function AttendExam() {
                             type="button"
                             className="back-exams-btn"
                             onClick={() => navigate(
-                                `/student/${student}/available-exams`
+                                `/student/${student.username}/available-exams`
                             )}
-                            disabled={isLoading}
+                            disabled={isVerifyingPassword}
                         >
                             ← Back to Available Exams
                         </button>
