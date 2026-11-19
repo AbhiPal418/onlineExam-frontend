@@ -147,7 +147,7 @@ function Login() {
                                                 setPassword(e.target.value)
                                                 setError("")
                                             }}
-                                        /> 
+                                        />
                                         <button
                                             type="button"
                                             className="password-toggle"
@@ -155,7 +155,7 @@ function Login() {
                                         >
                                             {showPassword ? <EyeOff /> : <Eye />}
                                         </button>
-                                        
+
                                         {error && (
                                             <p className="password-error">
                                                 {error}
@@ -190,6 +190,14 @@ function Login() {
                                                 setError("")
                                             }}
                                         />
+                                        <button
+                                            type="button"
+                                            className="password-toggle"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? <EyeOff /> : <Eye />}
+                                        </button>
+
                                         {error && (
                                             <p className="password-error">
                                                 {error}
