@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
     useNavigate,
@@ -8,10 +7,8 @@ import {
 } from "react-router-dom";
 
 import axios from "axios";
-
 import StudentSidebar from "../../components/StudentSidebar";
 import AfterLogout from "../../components/AfterLogout";
-
 import "../../styles/AttendExam.css";
 
 

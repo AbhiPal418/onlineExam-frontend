@@ -9,8 +9,6 @@ import AfterLogout from "../../components/AfterLogout";
 function MyResults() {
 
 
-    const navigate = useNavigate();
-
     const [results, setResults] = useState([]);
     const [user, setUser] = useState({});
     const [search, setSearch] = useState("");
