@@ -45,6 +45,13 @@ function AttendExam() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
+    if(isLoading){
+        return(
+            <div className="loading-data">
+                <p>Loading.....</p>
+            </div>
+        )
+    }
     // If user information is unavailable
     if (!student && !isLoading) {
         return <AfterLogout role="student" />;
