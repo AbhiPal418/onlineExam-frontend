@@ -155,8 +155,8 @@ function EditStudentProfile() {
     // Loading screen
     if (isLoading) {
         return (
-            <div className="edit-profile-loading">
-                Loading your profile...
+            <div className="loading-data">
+                <p>Loading.......</p>
             </div>
         );
     }

@@ -158,7 +158,11 @@ function AvailableExams() {
 
     // Loading screen
     if (userLoading) {
-        return <div className="loader">Loading...</div>;
+        return (
+            <div className="loading-data">
+                <p>Loading.......</p>
+            </div>
+        );
     }
 
 

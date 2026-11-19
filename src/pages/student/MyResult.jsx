@@ -116,7 +116,7 @@ function MyResults() {
     if (userLoading) {
         return (
             <div className="loading-data">
-                <p>Loading...</p>
+                <p>Loading.......</p>
             </div>
         );
     }

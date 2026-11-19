@@ -151,7 +151,7 @@ const ChangePassword = () => {
     // Loading screen
     if (isLoading) {
         return (
-            <div className="loading">
+            <div className="loading-data">
                 <p>Loading.......</p>
             </div>
         );

@@ -87,7 +87,11 @@ function StudentDashboard() {
 
 
     if (isLoading) {
-        return <div>Loading dashboard...</div>;
+        return (
+            <div className="loading-data">
+                <p>Loading.......</p>
+            </div>
+        );
     }
 
     if (!isAuthenticated) {
