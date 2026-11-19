@@ -24,12 +24,12 @@ function AttendExam() {
     const [isLoading,setIsLoading] = useState(false);
     // Use URL username as fallback
     // const student = location.state?.student || username;
-    const [student,setStudent]= useState(undefined);
+    const [student,setStudent]= useState({});
     const fetchUsername = async()=>{
         try {
             setIsLoading(true);
             const response = await axios.get(`/api/v1/student/dashboard`)
-            setStudent(response.data.data.username)
+            setStudent(response.data.data)
             setIsLoading(false)
         } catch (error) {
             console.error("Error fetching user name ",error)
@@ -72,7 +72,7 @@ function AttendExam() {
                     </p>
 
                     <Link
-                        to={`/student/${student}/available-exams`}
+                        to={`/student/${student.username}/available-exams`}
                         className="deactivated-btn"
                     >
                         Back to Available Exams
@@ -103,7 +103,7 @@ function AttendExam() {
                     </p>
 
                     <Link
-                        to={`/student/${student}/dashboard`}
+                        to={`/student/${student.username}/dashboard`}
                         className="deactivated-btn"
                     >
                         Back to Dashboard
@@ -155,7 +155,7 @@ function AttendExam() {
                 navigate(`/student/exam/${examId}`, {
                     state: {
                         exam: response.data.data,
-                        student: student
+                        student: student.username
                     }
                 });
 
