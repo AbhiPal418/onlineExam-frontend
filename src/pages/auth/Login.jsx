@@ -4,7 +4,7 @@ import SubNavbar from "../../components/SubNavbar";
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+
 
 function Login() {
     const navigate = useNavigate();
@@ -16,7 +16,7 @@ function Login() {
     const [error, setError] = useState("");
     const [email, setEmail] = useState("");
     const [rollNumber, setRollNumber] = useState("");
-    const [showPassword, setShowPassword] = useState(false)
+
 
 
 
@@ -39,7 +39,7 @@ function Login() {
             );
             setEmail(response.data.data.loggedinUser.email);
             setRollNumber(response.data.data.loggedinUser.rollNumber);
-
+          
             // console.log(response.data.data.loggedinUser.username)
             if (role === "teacher") {
                 navigate(`/teacher/${response.data.data.loggedinUser.username}/dashboard`);
@@ -148,14 +148,6 @@ function Login() {
                                                 setError("")
                                             }}
                                         />
-                                        <button
-                                            type="button"
-                                            className="password-toggle"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                        >
-                                            {showPassword ? <EyeOff /> : <Eye />}
-                                        </button>
-
                                         {error && (
                                             <p className="password-error">
                                                 {error}
@@ -190,14 +182,6 @@ function Login() {
                                                 setError("")
                                             }}
                                         />
-                                        <button
-                                            type="button"
-                                            className="password-toggle"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                        >
-                                            {showPassword ? <EyeOff /> : <Eye />}
-                                        </button>
-
                                         {error && (
                                             <p className="password-error">
                                                 {error}
