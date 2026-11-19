@@ -74,6 +74,18 @@ function StudentDashboard() {
 
     }, []);
 
+    const handleStartExam = (examId, exam) => {
+
+        navigate(`/student/${user.username}/attend-exam/${examId}`, {
+            state: {
+                exam: exam,
+                student: user.username
+            }
+        });
+
+    };
+
+
     if (isLoading) {
         return <div>Loading dashboard...</div>;
     }

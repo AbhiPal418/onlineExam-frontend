@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api':'https://online-exam-backend-delta.vercel.app',
-      // '/api':'http://localhost:3000',
+      '/api':'http://localhost:3000',
     },
   },
 })
