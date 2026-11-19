@@ -142,7 +142,7 @@ function MyResults() {
 
                     <div>
                         <h1>
-                            {user.fullName}, your Previous Exam Results
+                            {user.fullName}, Your Previous Exam Results
                         </h1>
                     </div>
 

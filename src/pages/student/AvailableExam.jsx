@@ -183,7 +183,7 @@ function AvailableExams() {
 
                 <div className="available-header">
                     <div>
-                        <h1>{user.fullName} here is your Available Exams</h1>
+                        <h1>Hi {user.fullName}, here are your available exams.</h1>
                     </div>
 
                     <div className="available-profile">
