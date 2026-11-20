@@ -59,7 +59,7 @@ function CreateExam() {
         createdBy: "",
         totalQuestions: 0,
         password: "",
-        questionMarks: 0,
+        questionMarks: 4,
         negativeMarks: 0,
     });
 
@@ -183,7 +183,7 @@ function CreateExam() {
             );
 
             if (response.data.success) {
-                navigate(`/teacher/${teacher.username}/dashboard`);
+                navigate(`/teacher/${teacher.username}/my-exams`);
             }
 
         } catch (error) {
@@ -320,7 +320,7 @@ function CreateExam() {
 
                             {/* TOTAL MARKS */}
 
-                            <div className="form-group">
+                            {/* <div className="form-group">
                                 <label>
                                     Total Marks <span>*</span>
                                 </label>
@@ -334,6 +334,22 @@ function CreateExam() {
                                     onChange={handleExamChange}
                                     required
                                 />
+                            </div> */}
+
+                            <div className="form-group">
+                                <label>
+                                    Marks per Question <span>*</span>
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="questionMarks"
+                                    placeholder="Enter marks per questions"
+                                    value={examData.questionMarks}
+                                    onChange={handleExamChange}
+                                    required
+                                />
+
                             </div>
 
 
@@ -359,7 +375,7 @@ function CreateExam() {
                                 </small>
                             </div>
 
-                            <div className="form-group full-width">
+                            {/* <div className="form-group full-width">
                                 <label>
                                     Marks per Question <span>*</span>
                                 </label>
@@ -373,7 +389,7 @@ function CreateExam() {
                                     required
                                 />
 
-                            </div>
+                            </div> */}
 
 
                             <div className="form-group full-width">
@@ -635,7 +651,7 @@ function CreateExam() {
 
                         <button type="submit" className="create-exam-btn" >
 
-                            Create Exam
+                           {isSaving?"Creating....":"Create Exam"}
                         </button>
 
 

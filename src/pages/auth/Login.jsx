@@ -16,7 +16,7 @@ function Login() {
     const [error, setError] = useState("");
     const [email, setEmail] = useState("");
     const [rollNumber, setRollNumber] = useState("");
-
+    const [isLogging,setIsLogging] = useState(false)
 
 
 
@@ -32,11 +32,12 @@ function Login() {
             } else {
                 userdata.rollNumber = username;
             }
-
+            setIsLogging(true);
             const response = await axios.post(
                 `/api/v1/${role}/login`,
                 userdata
             );
+            
             setEmail(response.data.data.loggedinUser.email);
             setRollNumber(response.data.data.loggedinUser.rollNumber);
           
@@ -49,6 +50,8 @@ function Login() {
         } catch (error) {
             console.error(error);
             setError(error.response.data?.message || "Incorrect Password")
+        }finally{
+            setIsLogging(false);
         }
         setUsername("");
         setPassword("")
@@ -195,8 +198,10 @@ function Login() {
                                 <a href="#">Forgot Password?</a>
                             </div>
 
-                            <button type="submit" className="auth-btn">
-                                Login
+                            <button type="submit" className="auth-btn" >
+                                {
+                                    isLogging ?"Logging....":"Login"
+                                }
                             </button>
                         </form>
                         {/* <p>{role}{username}</p> */}

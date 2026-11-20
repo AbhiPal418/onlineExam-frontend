@@ -27,7 +27,7 @@ function EditExam() {
         title: "",
         description: "",
         timeLimit: 30,
-        totalScore: 0,
+        // totalScore: 0,
         password: "",
         questionMarks: 4,
         negativeMarks: 0,
@@ -80,7 +80,7 @@ function EditExam() {
             title: examDataResponse.title || "",
             description: examDataResponse.description || "",
             timeLimit: examDataResponse.timeLimit ?? 30,
-            totalScore: examDataResponse.totalScore ?? 0,
+            // totalScore: examDataResponse.totalScore ?? 0,
             password: "",
             questionMarks: examDataResponse.questionMarks ?? 4,
             negativeMarks: examDataResponse.negativeMarks ?? 0,
@@ -410,7 +410,7 @@ function EditExam() {
 
                             {/* TOTAL MARKS */}
 
-                            <div className="form-group">
+                            {/* <div className="form-group">
                                 <label>
                                     Total Marks <span>*</span>
                                 </label>
@@ -424,8 +424,23 @@ function EditExam() {
                                     onChange={handleExamChange}
                                     required
                                 />
-                            </div>
+                            </div> */}
 
+                            <div className="form-group">
+                                <label>
+                                    Marks per Question <span>*</span>
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="questionMarks"
+                                    placeholder="Enter marks per questions"
+                                    value={examData.questionMarks}
+                                    onChange={handleExamChange}
+                                    required
+                                />
+
+                            </div>
 
                             {/* PASSWORD */}
 
@@ -448,7 +463,7 @@ function EditExam() {
                                 </small>
                             </div>
 
-                            <div className="form-group full-width">
+                            {/* <div className="form-group full-width">
                                 <label>
                                     Marks per Question <span>*</span>
                                 </label>
@@ -462,7 +477,7 @@ function EditExam() {
                                     required
                                 />
 
-                            </div>
+                            </div> */}
 
 
                             <div className="form-group full-width">
@@ -723,7 +738,7 @@ function EditExam() {
                             type="submit"
                             className="create-exam-btn"
                         >
-                            Update Exam
+                           {isSaving?"Saving...":"Update Exam"}
                         </button>
 
 
