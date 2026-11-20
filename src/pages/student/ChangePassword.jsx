@@ -218,7 +218,7 @@ const ChangePassword = () => {
                                         placeholder="Enter your current password"
                                     />
 
-                                    <button
+                                    {/* <button
                                         type="button"
                                         className="show-password-btn"
                                         onClick={() =>
@@ -226,7 +226,7 @@ const ChangePassword = () => {
                                         }
                                     >
                                         {showPassword.current ? "🙈" : "👁️"}
-                                    </button>
+                                    </button> */}
                                 </div>
                             </div>
 
@@ -249,7 +249,7 @@ const ChangePassword = () => {
                                         placeholder="Enter your new password"
                                     />
 
-                                    <button
+                                    {/* <button
                                         type="button"
                                         className="show-password-btn"
                                         onClick={() =>
@@ -257,7 +257,7 @@ const ChangePassword = () => {
                                         }
                                     >
                                         {showPassword.new ? "🙈" : "👁️"}
-                                    </button>
+                                    </button> */}
                                 </div>
 
                                 <span className="password-hint">
@@ -285,7 +285,7 @@ const ChangePassword = () => {
                                         placeholder="Re-enter your new password"
                                     />
 
-                                    <button
+                                    {/* <button
                                         type="button"
                                         className="show-password-btn"
                                         onClick={() =>
@@ -293,7 +293,7 @@ const ChangePassword = () => {
                                         }
                                     >
                                         {showPassword.confirm ? "🙈" : "👁️"}
-                                    </button>
+                                    </button> */}
                                 </div>
                             </div>
 
