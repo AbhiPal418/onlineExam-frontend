@@ -184,6 +184,7 @@ function TeacherSidebar() {
                             <button
                                 className="confirm-logout-btn"
                                 onClick={handleLogout}
+                                disabled={isLoggingOut}
                             >
                                {isLoggingOut?"Logging Out":"Yes, Logout"}
                             </button>
