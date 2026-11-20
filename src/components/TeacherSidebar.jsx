@@ -7,7 +7,7 @@ function TeacherSidebar() {
 
     const location = useLocation();
     const navigate = useNavigate();
-
+    const [isLoggingOut,setIsLoggingOut] = useState(false)
     const [teacher, setTeacher] = useState({});
     const [showModal, setShowModal] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +25,7 @@ function TeacherSidebar() {
     // Handle logout
     const handleLogout = async () => {
         try {
+            setIsLoggingOut(true);
             const response = await axios.post("/api/v1/teacher/logout");
 
             if (response.data.success) {
@@ -184,7 +185,7 @@ function TeacherSidebar() {
                                 className="confirm-logout-btn"
                                 onClick={handleLogout}
                             >
-                                Yes, Logout
+                               {isLoggingOut?"Logging Out":"Yes, Logout"}
                             </button>
 
                         </div>

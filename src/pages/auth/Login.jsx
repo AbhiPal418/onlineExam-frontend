@@ -200,7 +200,7 @@ function Login() {
 
                             <button type="submit" className="auth-btn" >
                                 {
-                                    isLogging ?"Logging....":"Login"
+                                    isLogging ?"Logging in....":"Login"
                                 }
                             </button>
                         </form>
